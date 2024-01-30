@@ -25,11 +25,15 @@ void setup() {
   MIDI.setHandleNoteOn(handleNoteOn);
   MIDI.setHandleNoteOff(handleNoteOff);
   MIDI.setHandleControlChange(handleControlChange);
+  MIDI.setHandleStart(handleStart);
+  MIDI.setHandleStop(handleStop);
+  MIDI.setHandleClock(handleClock);
 
-  MIDI.begin(MIDI_CHANNEL_OMNI);
+  MIDI.turnThruOn();
+
+  MIDI.begin(MIDI_CHANNEL);
 
   looper.init();
-  
 }
 
 void handleNoteOn(byte channel, byte note, byte velocity) {
@@ -37,19 +41,38 @@ void handleNoteOn(byte channel, byte note, byte velocity) {
 }
 
 void handleNoteOff(byte channel, byte note, byte velocity) {
-  //displayManager.print("OFF");
   digitalWrite(LED_BUILTIN, LOW);
 }
-
 
 void handleControlChange(byte channel, byte control, byte value) {
   if (channel == MIDI_CHANNEL) {
     looper.setFromCC(control, value);
-  } else {
-    MIDI.sendControlChange(control, value, channel);
   }
 }
 
+void handleStart() {
+  looper.play(true);
+}
+
+void handleStop() {
+  looper.play(false);
+}
+
+void handleClock() {
+  looper.tick();
+}
+
+unsigned int counter = 0;
+
 void loop() {
   MIDI.read();
+
+  if (counter >= 300)
+  {
+    counter = 0;
+    looper.updateFeedback(); 
+  }
+
+  counter++;
+  
 }

@@ -1,6 +1,7 @@
-#include "Parameters.h"
+#pragma once
+
 #include "DisplayManager.h"
-#include "Sequencer.h"
+#include "LooperData.h"
 
 class LooperEngine : public ParametersDelegate {
 public:
@@ -8,46 +9,37 @@ public:
   }
 
   void init() {
-    displayManager.init();
+    displayManager.init(&data);
     parameters.readAll();
   }
 
-  void updateDisplay() {
-    String str = "chan:" + String(selectedChannel);
-    str += "\nb:" + String(seq.tracks[selectedChannel - 1].barCount);
-    displayManager.print(str.c_str());
-  }
-
-  byte getTrackId(Param p, Param firstTrackP) {
-    return p - firstTrackP;
-  }
-
   virtual void parameterChanged(Param p, byte value) override {
-    switch(p) {
-      case channelSelect: {
-        selectedChannel = value;
-      }
-      break;
-
-      _allTrackCase(barCount) :  {
-        byte trackId = getTrackId(p, barCount1);
-        seq.tracks[trackId].barCount = value;
-      }
-      break;
-    }
-
-    updateDisplay();
+    data.parameterChanged(p, value);
   }
 
   void setFromCC(byte addrFromCC, byte ccValue) {
     parameters.setFromCC(addrFromCC, ccValue);
   }
 
+  void play(bool state) {
+    if (state) {
+      data.seq.resetTicks();
+    }
+    data.isPlaying = state;
+  }
+
+  void tick() {
+    data.seq.tick();
+  }
+
+  void updateFeedback() {
+    displayManager.update();
+  }
+
 private:
   Parameters parameters = Parameters(this);  
   DisplayManager displayManager;
 
-  byte selectedChannel;
-  Sequencer seq;
+  LooperData data;
   
 };
