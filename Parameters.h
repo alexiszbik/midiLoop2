@@ -1,5 +1,6 @@
 
 #include <EEPROM.h>
+#include "Const.h"
 
 #define CC_START 10
 
@@ -66,10 +67,13 @@ public:
   Bounds getBounds(Param p) {
      switch (p) {
       case channelSelect :
-        return {1,4};
+        return {1,TRACK_COUNT};
 
       _allTrackCase(barCount) : 
-        return {1,16};
+        return {1,MAX_BARS};
+
+      _allTrackCase(stepCount) : 
+        return {1,MAX_STEPS_PER_BAR};
     }
   }
 

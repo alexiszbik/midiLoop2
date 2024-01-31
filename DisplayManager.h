@@ -47,7 +47,7 @@ public:
 
   void update() {
 
-    byte chan = data->selectedChannel;
+    byte chan = data->seq.selectedChannel;
     Track* t = &data->seq.tracks[chan - 1];
     
     if (line == 0) {  
@@ -56,7 +56,7 @@ public:
       goToLine(0);
       setInvertedColor(true);
       
-      writeNbr(data->selectedChannel);
+      writeNbr(chan);
 
       setInvertedColor(false);
       display.write(' ');

@@ -21,11 +21,17 @@ public:
     parameters.setFromCC(addrFromCC, ccValue);
   }
 
+  void addNote(byte note) {
+    if (data.isPlaying) {
+      data.seq.addNote(note);
+    }
+  }
+
   void play(bool state) {
     if (state) {
       data.seq.resetTicks();
     }
-    data.isPlaying = state;
+    data.play(state);
   }
 
   void tick() {

@@ -1,11 +1,16 @@
 
+#include "Const.h"
 #include "Track.h"
 
-#define TRACK_COUNT 4
-
 class Sequencer {
+public:
+  Sequencer() {
+    for (byte i = 0; i < TRACK_COUNT; i++) {
+      tracks[i].midiChannel = i + 1;
+    }
+  }
 
-  public:
+public:
   void tick() {
     for (byte i = 0; i < TRACK_COUNT; i++) {
       tracks[i].tick();
@@ -18,7 +23,18 @@ class Sequencer {
     }  
   }
 
+  void addNote(byte note) {
+    tracks[selectedChannel - 1].addNote(note);
+  }
+
+  void triggerNoteOff() {
+    for (byte i = 0; i < TRACK_COUNT; i++) {
+      tracks[i].triggerNoteOff();
+    }  
+  }
+
 public:
+  byte selectedChannel = 1;
   Track tracks[TRACK_COUNT];
 
 };

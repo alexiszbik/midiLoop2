@@ -1,6 +1,8 @@
 
 #include "MIDI.h"
 
+MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
+
 #include "LooperEngine.h"
 
 #define MIDI_CHANNEL 12
@@ -13,9 +15,10 @@ LooperEngine looper;
 
 //MIDI_CREATE_DEFAULT_INSTANCE();
 
-MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
-
 /** End of the super important message **/
+
+//counter is dirty but works fine
+unsigned int counter = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -38,6 +41,9 @@ void setup() {
 
 void handleNoteOn(byte channel, byte note, byte velocity) {
   digitalWrite(LED_BUILTIN, HIGH);
+  if (channel == MIDI_CHANNEL && velocity > 0) {
+    looper.addNote(note);
+  }
 }
 
 void handleNoteOff(byte channel, byte note, byte velocity) {
@@ -62,8 +68,6 @@ void handleClock() {
   looper.tick();
 }
 
-unsigned int counter = 0;
-
 void loop() {
   MIDI.read();
 
@@ -72,7 +76,5 @@ void loop() {
     counter = 0;
     looper.updateFeedback(); 
   }
-
   counter++;
-  
 }

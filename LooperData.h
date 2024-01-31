@@ -12,7 +12,7 @@ public:
   void parameterChanged(Param p, byte value)  {
     switch(p) {
       case channelSelect: {
-        selectedChannel = value;
+        seq.selectedChannel = value;
       }
       break;
 
@@ -21,12 +21,26 @@ public:
         seq.tracks[trackId].barCount = value;
       }
       break;
+
+      _allTrackCase(stepCount) :  {
+        byte trackId = getTrackId(p, stepCount1);
+        seq.tracks[trackId].stepsPerBar = value;
+      }
+      break;
     }
+  }
+
+  void play(bool state) {
+    isPlaying = state;
+    if (!state) {
+      seq.triggerNoteOff();
+    }
+    
   }
   
 public:
-  byte selectedChannel = 1;
   Sequencer seq;
   bool isPlaying = false;
   bool isRecording = true;
+
 };
