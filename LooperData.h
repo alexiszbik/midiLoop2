@@ -5,10 +5,6 @@
 
 class LooperData {
 public:
-  byte getTrackId(Param p, Param firstTrackP) {
-    return p - firstTrackP;
-  }
-
   void parameterChanged(Param p, byte value)  {
     switch(p) {
       case channelSelect: {
@@ -35,12 +31,17 @@ public:
     if (!state) {
       seq.triggerNoteOff();
     }
-    
+  }
+
+  void tick() {
+    if (isPlaying) {
+     seq.tick();
+    }
   }
   
 public:
   Sequencer seq;
   bool isPlaying = false;
-  bool isRecording = true;
+  bool isRecording = false;
 
 };

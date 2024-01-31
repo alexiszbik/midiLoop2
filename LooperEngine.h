@@ -17,13 +17,41 @@ public:
     data.parameterChanged(p, value);
   }
 
-  void setFromCC(byte addrFromCC, byte ccValue) {
-    parameters.setFromCC(addrFromCC, ccValue);
+  void controlChange(byte control, byte value) {
+    switch(control) {
+      case Record :
+        data.isRecording = midiValueToBool(value);
+        break;
+
+      case ClearAll :
+        data.seq.clearAll();
+        break;
+
+      _allTrackCase(ClearTrack) :
+        data.seq.tracks[getTrackId(control, ClearTrack1)].clearAll();
+        break;
+
+      default :
+        parameters.setFromCC(control, value);
+        break;
+    }
+    
   }
 
-  void addNote(byte note) {
-    if (data.isPlaying) {
-      data.seq.addNote(note);
+  void noteOn(byte note, byte velocity) {
+    if (data.isPlaying && data.isRecording) {
+      if (velocity > 0) {
+        data.seq.addNote(note);
+      }
+    } else {
+      data.seq.noteThru(note, velocity);
+    }
+  }
+
+  void noteOff(byte note, byte velocity) {
+    if (data.isPlaying && data.isRecording) {
+    } else {
+      data.seq.noteThru(note, 0);
     }
   }
 
@@ -35,7 +63,7 @@ public:
   }
 
   void tick() {
-    data.seq.tick();
+    data.tick();
   }
 
   void updateFeedback() {
@@ -43,6 +71,10 @@ public:
   }
 
 private:
+  bool midiValueToBool(byte value) {
+    return value > 64;
+  }
+
   Parameters parameters = Parameters(this);  
   DisplayManager displayManager;
 

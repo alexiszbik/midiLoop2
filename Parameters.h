@@ -2,28 +2,6 @@
 #include <EEPROM.h>
 #include "Const.h"
 
-#define CC_START 10
-
-#define _allTrackEnum(ParamName) \
-ParamName##1, \
-ParamName##2, \
-ParamName##3, \
-ParamName##4
-
-#define _allTrackCase(ParamName) \
-case ParamName##1 : \
-case ParamName##2 : \
-case ParamName##3 : \
-case ParamName##4 
-
-enum Param {
-  channelSelect,
-  _allTrackEnum(barCount),
-  _allTrackEnum(stepCount),
-
-  count
-};
-
 struct Bounds {
   byte min;
   byte max;

@@ -41,18 +41,21 @@ void setup() {
 
 void handleNoteOn(byte channel, byte note, byte velocity) {
   digitalWrite(LED_BUILTIN, HIGH);
-  if (channel == MIDI_CHANNEL && velocity > 0) {
-    looper.addNote(note);
+  if (channel == MIDI_CHANNEL) {
+    looper.noteOn(note, velocity);
   }
 }
 
 void handleNoteOff(byte channel, byte note, byte velocity) {
   digitalWrite(LED_BUILTIN, LOW);
+  if (channel == MIDI_CHANNEL) {
+    looper.noteOff(note, velocity);
+  }
 }
 
 void handleControlChange(byte channel, byte control, byte value) {
   if (channel == MIDI_CHANNEL) {
-    looper.setFromCC(control, value);
+    looper.controlChange(control, value);
   }
 }
 

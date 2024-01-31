@@ -33,6 +33,21 @@ public:
     }  
   }
 
+  void noteThru(byte note, byte velocity) {
+    byte channel = tracks[selectedChannel - 1].midiChannel;
+    if (velocity > 0) {
+      MIDI.sendNoteOn(note, velocity, channel);
+    } else {
+      MIDI.sendNoteOff(note, 0, channel);
+    }
+  }
+
+  void clearAll() {
+    for (byte i = 0; i < TRACK_COUNT; i++) {
+      tracks[i].clearAll();
+    }
+  }
+
 public:
   byte selectedChannel = 1;
   Track tracks[TRACK_COUNT];

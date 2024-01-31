@@ -30,12 +30,11 @@ public:
   }
 
   void addNote(byte note) {
-    int pos = (stepNow() + 1) % (barCount * stepsPerBar);
-    sequence[pos] = note;
+    sequence[stepNext()] = note;
   }
 
   void clear() {
-    sequence[stepNow()] = 0;
+    sequence[stepNext()] = 0;
   }
 
   void clearAll() {
@@ -54,6 +53,10 @@ public:
 private:
   int stepNow() {
     return currentBar * stepsPerBar + currentStep;
+  }
+
+  int stepNext() {
+    return (stepNow() + 1) % (barCount * stepsPerBar);
   }
 
   void incrementTick() {
