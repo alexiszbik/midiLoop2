@@ -2,6 +2,7 @@
 
 #include "DisplayManager.h"
 #include "LooperData.h"
+#include "Macros.h"
 
 class LooperEngine : public ParametersDelegate {
 public:
@@ -41,7 +42,9 @@ public:
   void noteOn(byte note, byte velocity) {
     if (data.isPlaying && data.isRecording) {
       if (velocity > 0) {
-        data.seq.addNote(note);
+        data.seq.noteOn(note);
+      } else {
+        data.seq.noteOff(note);
       }
     } else {
       data.seq.noteThru(note, velocity);
@@ -50,6 +53,7 @@ public:
 
   void noteOff(byte note, byte velocity) {
     if (data.isPlaying && data.isRecording) {
+      data.seq.noteOff(note);
     } else {
       data.seq.noteThru(note, 0);
     }
@@ -71,9 +75,6 @@ public:
   }
 
 private:
-  bool midiValueToBool(byte value) {
-    return value > 64;
-  }
 
   Parameters parameters = Parameters(this);  
   DisplayManager displayManager;

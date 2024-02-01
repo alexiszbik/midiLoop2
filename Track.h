@@ -1,6 +1,7 @@
 
 #include "Const.h"
 #include "serialMIDI.h"
+#include "Arpeggiator.h"
 
 #define STEP_LENGTH 6
 #define SEQUENCE_LENGTH_MAX MAX_BARS*MAX_STEPS_PER_BAR
@@ -29,8 +30,20 @@ public:
     currentBar = 0;
   }
 
-  void addNote(byte note) {
-    sequence[stepNext()] = note;
+  void noteOn(byte note) {
+    if (arpState) {
+      arp.addNote(note);
+    } else {
+      sequence[stepNext()] = note;
+    }
+  }
+
+  void noteOff(byte note) {
+    if (arpState) {
+      arp.removeNote(note);
+    } else {
+
+    }
   }
 
   void clear() {
@@ -88,6 +101,8 @@ public:
   byte midiChannel = 1;
   bool isMuted = false;
 
+  bool arpState = false;
+
   byte barCount = 4;
   byte stepsPerBar = MAX_STEPS_PER_BAR;
 
@@ -99,5 +114,7 @@ private:
 
   byte sequence[SEQUENCE_LENGTH_MAX];
   byte previousNote = 0;
+
+  Arpeggiator arp;
   
 };

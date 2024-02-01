@@ -19,18 +19,14 @@ case ParamName##2 : \
 case ParamName##3 : \
 case ParamName##4 
 
-inline static byte getTrackId(int p, int firstTrackP) {
-  return p - firstTrackP;
-}
-
 enum Param {
   channelSelect,
   _allTrackEnum(barCount),
   _allTrackEnum(stepCount),
+  _allTrackEnum(arpState),
 
   count
 };
-
 
 enum CCList {
   Record = 10,

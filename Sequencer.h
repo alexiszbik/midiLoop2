@@ -23,8 +23,12 @@ public:
     }  
   }
 
-  void addNote(byte note) {
-    tracks[selectedChannel - 1].addNote(note);
+  void noteOn(byte note) {
+    tracks[selectedChannel - 1].noteOn(note);
+  }
+
+  void noteOff(byte note) {
+    tracks[selectedChannel - 1].noteOff(note);
   }
 
   void triggerNoteOff() {

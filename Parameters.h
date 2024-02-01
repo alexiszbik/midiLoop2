@@ -1,6 +1,7 @@
 
 #include <EEPROM.h>
 #include "Const.h"
+#include "Macros.h"
 
 struct Bounds {
   byte min;
@@ -20,8 +21,9 @@ public:
   }
 
   void readAll() {
-    for (int addr = 0; addr << Param::count; addr++) {
+    for (int addr = 0; addr < Param::count; addr++) {
       vars[addr] = EEPROM.read(addr);
+      vars[addr] = mapValue(addr, vars[addr]);
       delegate->parameterChanged((Param)addr, vars[addr]);
     }
   }
@@ -38,8 +40,9 @@ public:
     }
   }
 
-  void setClamped(Param p, byte value, Bounds bounds) {
-    set(p, constrain(value, bounds.min, bounds.max));
+  byte mapValue(Param p, byte value) {
+    Bounds bounds = getBounds(p);
+    return constrain(value, bounds.min, bounds.max);
   }
 
   Bounds getBounds(Param p) {
@@ -52,17 +55,29 @@ public:
 
       _allTrackCase(stepCount) : 
         return {1,MAX_STEPS_PER_BAR};
+
+      _allTrackCase(arpState) : 
+        return {0,1};
     }
   }
 
-  void setFromCC(byte addrFromCC, byte ccValue) {
-    int addr = (int)addrFromCC - CC_START;
+  void setFromCC(byte control, byte value) {
+    int addr = (int)control - CC_START;
 
     if (addr < 0 || addr >= Param::count) {
       return;
     }
 
-    setClamped(addr, ccValue, getBounds(addr));
+    switch (addr) {
+      _allTrackCase(arpState) : 
+        value = midiValueToBool(value);
+        break;
+
+    default:
+      break;
+    }
+
+    set(addr, mapValue(addr, value));
   }
 
 private:

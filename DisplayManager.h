@@ -67,6 +67,13 @@ public:
       display.write(':');
       writeNbr(t->stepsPerBar);
     }
+    else if (line == 16) {
+      goToLine(1);
+      if (t->arpState) {
+        display.write("ARP");
+      }
+      
+    }
     else if (line == 32) {
       goToLine(3);
       display.write(data->isPlaying ? CHAR_PLAY : CHAR_STOP);

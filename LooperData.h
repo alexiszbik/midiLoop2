@@ -3,6 +3,13 @@
 #include "Sequencer.h"
 #include "Parameters.h"
 
+#define APPLY_PARAM(paramName, varName) \
+_allTrackCase(paramName) :  { \
+  byte trackId = getTrackId(p, paramName##1); \
+  seq.tracks[trackId].varName = value; \
+} \
+  break; \
+
 class LooperData {
 public:
   void parameterChanged(Param p, byte value)  {
@@ -12,17 +19,11 @@ public:
       }
       break;
 
-      _allTrackCase(barCount) :  {
-        byte trackId = getTrackId(p, barCount1);
-        seq.tracks[trackId].barCount = value;
-      }
-      break;
+      APPLY_PARAM(barCount, barCount)
 
-      _allTrackCase(stepCount) :  {
-        byte trackId = getTrackId(p, stepCount1);
-        seq.tracks[trackId].stepsPerBar = value;
-      }
-      break;
+      APPLY_PARAM(stepCount, stepsPerBar)
+
+      APPLY_PARAM(arpState, arpState)
     }
   }
 
