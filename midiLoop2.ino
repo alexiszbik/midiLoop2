@@ -1,13 +1,10 @@
 
 #include "MIDI.h"
 
+//for nano every
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
-#include "LooperEngine.h"
-
-#define MIDI_CHANNEL 12
-
-LooperEngine looper;
+#define MIDI_CHANNEL 1
 
 /** THIS IS SUPER IMPORTANT **/
 
@@ -17,12 +14,26 @@ LooperEngine looper;
 
 /** End of the super important message **/
 
+
+#include "MidiOut.h"
+#include "LooperEngine.h"
+#include "DisplayManager.h"
+
+MidiOut midiOut;
+LooperEngine looper = LooperEngine(&midiOut);
+DisplayManager displayManager;
+
 //counter is dirty but works fine
 unsigned int counter = 0;
+
+#define REC_SWITCH_TEST 3
+//#define ARP_SWITCH_TEST 4
 
 void setup() {
   Serial.begin(9600);
   Serial1.begin(9600);
+
+  //Serial1.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
 
   MIDI.setHandleNoteOn(handleNoteOn);
@@ -36,35 +47,35 @@ void setup() {
 
   MIDI.begin(MIDI_CHANNEL);
 
-  looper.init();
+  displayManager.init(&looper);
 }
 
 void handleNoteOn(byte channel, byte note, byte velocity) {
   digitalWrite(LED_BUILTIN, HIGH);
   if (channel == MIDI_CHANNEL) {
-    looper.noteOn(note, velocity);
+    looper.playNoteOn(note, velocity);
   }
 }
 
 void handleNoteOff(byte channel, byte note, byte velocity) {
   digitalWrite(LED_BUILTIN, LOW);
   if (channel == MIDI_CHANNEL) {
-    looper.noteOff(note, velocity);
+    looper.playNoteOn(note, 0);
   }
 }
 
 void handleControlChange(byte channel, byte control, byte value) {
   if (channel == MIDI_CHANNEL) {
-    looper.controlChange(control, value);
+    //looper.controlChange(control, value);
   }
 }
 
 void handleStart() {
-  looper.play(true);
+  looper.setIsPlaying(true);
 }
 
 void handleStop() {
-  looper.play(false);
+  looper.setIsPlaying(false);
 }
 
 void handleClock() {
@@ -74,10 +85,11 @@ void handleClock() {
 void loop() {
   MIDI.read();
 
-  if (counter >= 300)
+  if (counter >= 200)
   {
+    //handleMidiThru();
     counter = 0;
-    looper.updateFeedback(); 
+    displayManager.update(); 
   }
   counter++;
 }

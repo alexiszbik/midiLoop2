@@ -2,8 +2,6 @@
 
 #include "Screen.h"
 
-#include "LooperData.h"
-
 #define CHAR_NOTE 14
 #define CHAR_PLAY 16
 #define CHAR_STOP 219
@@ -16,13 +14,14 @@ public:
   DisplayManager() {
   }
 
-  void init(LooperData* data) {
+  void init(LooperEngine* engine) {
     display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
     display.setTextWrap(true);
     display.setTextSize(2); 
     display.cp437(true); 
     display.clearDisplay();
-    this->data = data;
+    display.drawPixel(10, 10, SSD1306_WHITE);
+    this->engine = engine;
   }
 
   void setInvertedColor(bool inverted) {
@@ -46,46 +45,51 @@ public:
   }
 
   void update() {
-
-    byte chan = data->seq.selectedChannel;
-    Track* t = &data->seq.tracks[chan - 1];
     
+    Transport* transport = engine->getTransport();
+    TrackSettings* settings = engine->getSettings();
+
     if (line == 0) {  
 
       display.clearDisplay();
       goToLine(0);
       setInvertedColor(true);
       
-      writeNbr(chan);
+      writeNbr(/*channnel ? */ 1);
 
       setInvertedColor(false);
       display.write(' ');
       setInvertedColor(false);
       display.write(CHAR_NOTE);
+
+      byte barCount = settings->barCount;
+      byte steps = settings->stepsPerBar;
       
-      writeNbr(t->barCount);
+      writeNbr(barCount);
       display.write(':');
-      writeNbr(t->stepsPerBar);
+      writeNbr(steps);
     }
     else if (line == 16) {
       goToLine(1);
-      if (t->arpState) {
+      if (true /* arp state */) {
         display.write("ARP");
       }
       
     }
     else if (line == 32) {
       goToLine(3);
-      display.write(data->isPlaying ? CHAR_PLAY : CHAR_STOP);
+      display.write(transport->getIsPlaying() ? CHAR_PLAY : CHAR_STOP);
       display.write(' ');
-      display.write(data->isRecording ? CHAR_REC : ' ');
+      display.write(true /* is recording */? CHAR_REC : ' ');
       display.write(' ');
 
-      writeNbr(t->currentBar);
+      int step = transport->getCurrentStep();
+
+      writeNbr(/* current bar */1);
       display.write('.');
-      writeNbr(t->currentStep/4);
+      writeNbr((step % 16)/4);
       display.write('.');
-      writeNbr(t->currentStep);
+      writeNbr(step % 16);
     }
     
     display.display();
@@ -96,7 +100,7 @@ public:
 private:
    Screen display = Screen();
    bool invertedColor = false;
-   LooperData* data;
+   LooperEngine* engine;
 
    byte line = 0;
 

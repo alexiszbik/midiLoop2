@@ -1,84 +1,82 @@
+/*
+  ==============================================================================
+
+    LooperEngine.h
+    Created: 16 Jun 2024 6:46:50pm
+    Author:  Alexis ZBIK
+
+  ==============================================================================
+*/
+
 #pragma once
 
-#include "DisplayManager.h"
-#include "LooperData.h"
-#include "Macros.h"
+#include "Track.h"
 
-class LooperEngine : public ParametersDelegate {
+#define TRACK_COUNT 4
+
+class LooperEngine {
 public:
-  LooperEngine() {
-  }
-
-  void init() {
-    displayManager.init(&data);
-    parameters.readAll();
-  }
-
-  virtual void parameterChanged(Param p, byte value) override {
-    data.parameterChanged(p, value);
-  }
-
-  void controlChange(byte control, byte value) {
-    switch(control) {
-      case Record :
-        data.isRecording = midiValueToBool(value);
-        break;
-
-      case ClearAll :
-        data.seq.clearAll();
-        break;
-
-      _allTrackCase(ClearTrack) :
-        data.seq.tracks[getTrackId(control, ClearTrack1)].clearAll();
-        break;
-
-      default :
-        parameters.setFromCC(control, value);
-        break;
+    LooperEngine(MidiOut* midiOut) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].initialize(midiOut);
+            track[t].setChannelOut(t + 5); //temp
+        }
+        track[0].setIsSelected(true);
+    }
+public:
+    void tick() {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].tick();
+        }
     }
     
-  }
-
-  void noteOn(byte note, byte velocity) {
-    if (data.isPlaying && data.isRecording) {
-      if (velocity > 0) {
-        data.seq.noteOn(note);
-      } else {
-        data.seq.noteOff(note);
-      }
-    } else {
-      data.seq.noteThru(note, velocity);
+    void setIsPlaying(bool isPlaying) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setIsPlaying(isPlaying);
+        }
     }
-  }
-
-  void noteOff(byte note, byte velocity) {
-    if (data.isPlaying && data.isRecording) {
-      data.seq.noteOff(note);
-    } else {
-      data.seq.noteThru(note, 0);
+    
+    void setIsRecording(bool isRecording) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setIsRecording(isRecording);
+        }
     }
-  }
 
-  void play(bool state) {
-    if (state) {
-      data.seq.resetTicks();
+    void setUseArp(bool useArp) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setUseArp(useArp);
+        }
     }
-    data.play(state);
-  }
+    
+    void playNoteOn(byte note, byte velocity) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].playNote(note, velocity);
+        }
+    }
+    
+    void selectExclusiveTrack(byte trackIndex) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setIsSelected(trackIndex == t);
+        }
+    }
+    
+    void clearAll() {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].clearAllSeq();
+        }
+    }
 
-  void tick() {
-    data.tick();
-  }
+    Transport* getTransport() {
+        return track[0].getTransport();
+    }
 
-  void updateFeedback() {
-    displayManager.update();
-  }
-
+    TrackSettings* getSettings() {
+        return track[0].getSettings();
+    }
+    
 private:
-
-  Parameters parameters = Parameters(this);  
-  DisplayManager displayManager;
-
-  LooperData data;
-  
+    Track track[TRACK_COUNT];
+    
+    byte noteChannel = 1;
+    
 };

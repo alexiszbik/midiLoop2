@@ -1,120 +1,122 @@
+/*
+ ==============================================================================
+ 
+ Track.h
+ Created: 16 Jun 2024 6:59:27pm
+ Author:  Alexis ZBIK
+ 
+ ==============================================================================
+ */
 
-#include "Const.h"
-#include "serialMIDI.h"
+#pragma once
+
+#include "Transport.h"
+#include "Sequence.h"
+#include "MidiOut.h"
 #include "Arpeggiator.h"
 
-#define STEP_LENGTH 6
-#define SEQUENCE_LENGTH_MAX MAX_BARS*MAX_STEPS_PER_BAR
-
-#define ON 127
-#define OFF 0
-
-class Track {
+class Track : public TransportDelegate {
 public:
-  Track() {
-    clearAll();
-  }
-
-public:
-  void tick() {
-    if (currentTick % STEP_LENGTH == 0) {
-      triggerNoteOff();
-      triggerNoteOn();
+    void initialize(MidiOut* midiOut) {
+        this->midiOut = midiOut;
     }
-    incrementTick(); 
-  }
-
-  void resetTicks() {
-    currentTick = 0;
-    currentStep = 0;
-    currentBar = 0;
-  }
-
-  void noteOn(byte note) {
-    if (arpState) {
-      arp.addNote(note);
-    } else {
-      sequence[stepNext()] = note;
+    
+    void tick() {
+        transport.tick();
     }
-  }
-
-  void noteOff(byte note) {
-    if (arpState) {
-      arp.removeNote(note);
-    } else {
-
+    
+    void playNote(byte note, byte velocity) {
+        if (settings.isSelected) {
+            bool isPlaying = transport.getIsPlaying();
+            if (settings.arpIsOn && isPlaying) {
+                if (velocity) {
+                    arp.addNote(note);
+                } else {
+                    arp.removeNote(note);
+                }
+            } else {
+                if (settings.isRecording && isPlaying) {
+                    int step = transport.getRecStep();
+                    if (velocity) {
+                        sequence[step] = note;
+                    }
+                } else {
+                    midiOut->sendNote(settings.channelOut, note, velocity);
+                }
+            }
+        }
     }
-  }
+    
+    virtual void didChangeStep (int newStep) override {
+        if (lastNote) {
+            midiOut->sendNote(settings.channelOut, lastNote, 0);
+            lastNote = 0;
+        }
+        
+        byte noteValue = sequence[newStep];
 
-  void clear() {
-    sequence[stepNext()] = 0;
-  }
+        if (settings.arpIsOn) {
+            byte arpNote  = arp.getNote();
+            if (arpNote) {
+              noteValue = arpNote;
+            }
 
-  void clearAll() {
-    for (int i = 0; i < SEQUENCE_LENGTH_MAX; i++) {
-      sequence[i] = 0;
+            if (settings.isRecording && noteValue) {
+                sequence[newStep] = noteValue;
+            }
+        }
+        
+        if (noteValue) {
+            midiOut->sendNote(settings.channelOut, noteValue, MAX_VELOCITY);
+            lastNote = noteValue;
+        }
     }
-  }
 
-  void triggerNoteOff() {
-    if (previousNote > 0) {
-      MIDI.sendNoteOn(previousNote, OFF, midiChannel);
-      previousNote = 0;
+    void clearAllSeq() {
+        sequence.clearAll();
     }
-  }
+    
+    void setIsPlaying(bool isPlaying) {
+        if (!isPlaying) {
+            arp.eraseAll();
+        }
+        transport.setIsPlaying(isPlaying);
+    }
+    
+    void setIsRecording(bool isRecording) {
+        settings.isRecording = isRecording;
+    }
+    
+    void setIsSelected(bool isSelected) {
+        settings.isSelected = isSelected;
+    }
+    
+    void setChannelOut(byte channelOut) {
+        settings.channelOut = channelOut;
+    }
+    
+    void setUseArp(bool state) {
+        if (settings.arpIsOn && !state) {
+            arp.eraseAll();
+        }
+        settings.arpIsOn = state;
+    }
 
+    Transport* getTransport() {
+      return &transport;
+    }
+
+    TrackSettings* getSettings() {
+      return &settings;
+    }
+    
 private:
-  int stepNow() {
-    return currentBar * stepsPerBar + currentStep;
-  }
-
-  int stepNext() {
-    return (stepNow() + 1) % (barCount * stepsPerBar);
-  }
-
-  void incrementTick() {
-    currentTick++;
-    if (currentTick % STEP_LENGTH == 0) {
-      currentStep++;
-    }
-    if (currentStep >= stepsPerBar) {
-      currentStep = 0;
-      currentBar++;
-    }
-    if (currentBar >= barCount) {
-      currentBar = 0;
-    }
-
-    currentTick = currentTick % 96;
-  }
-
-  void triggerNoteOn() {
-    byte note = sequence[stepNow()];
-
-    if (note > 0 && !isMuted) {
-      MIDI.sendNoteOn(note, ON, midiChannel);
-      previousNote = note;
-    }
-  }
-
-public:
-  byte midiChannel = 1;
-  bool isMuted = false;
-
-  bool arpState = false;
-
-  byte barCount = 4;
-  byte stepsPerBar = MAX_STEPS_PER_BAR;
-
-  byte currentStep = 0;
-  byte currentBar = 0;
-
+    byte lastNote = 0;
+    
 private:
-  byte currentTick = 0;
-
-  byte sequence[SEQUENCE_LENGTH_MAX];
-  byte previousNote = 0;
-
-  Arpeggiator arp;
-  
+    MidiOut* midiOut;
+    TrackSettings settings;
+    Transport transport = Transport(&settings, this);
+    Sequence sequence;
+    Arpeggiator arp;
 };
