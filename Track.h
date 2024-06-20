@@ -95,6 +95,14 @@ public:
         settings.channelOut = channelOut;
     }
     
+    void setBarCount(byte newBarCount) {
+        settings.barCount = newBarCount;
+    }
+    
+    void setStepCount(byte newStepCount) {
+        settings.stepsPerBar = newStepCount;
+    }
+    
     void setUseArp(bool state) {
         if (settings.arpIsOn && !state) {
             arp.eraseAll();

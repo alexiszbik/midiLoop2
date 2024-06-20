@@ -60,6 +60,18 @@ public:
         }
     }
     
+    void setGlobalBarCount(byte newBarCount) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setBarCount(newBarCount);
+        }
+    }
+    
+    void setGlobalStepCount(byte newStepCount) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setStepCount(newStepCount);
+        }
+    }
+    
     void clearAll() {
         for (byte t = 0; t < TRACK_COUNT; t++) {
             track[t].clearAllSeq();
