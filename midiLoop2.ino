@@ -1,5 +1,14 @@
 
 #include "MIDI.h"
+#include "Mux.h"
+
+#define KNOB_A A7
+#define KNOB_B A6
+#define KNOB_C A3
+
+using namespace admux;
+
+Mux mux(Pin(6, INPUT, PinType::Digital), Pinset(7, 8, 9, 10));
 
 //for nano every
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
@@ -48,6 +57,12 @@ void setup() {
   MIDI.begin(MIDI_CHANNEL);
 
   displayManager.init(&looper);
+
+
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
 }
 
 void handleNoteOn(byte channel, byte note, byte velocity) {
@@ -82,12 +97,47 @@ void handleClock() {
   looper.tick();
 }
 
+int getKnobValue(byte pin, int min, int max) {
+  return round(((float)analogRead(pin)/1024.f)*(max - min) + min);
+}
+
+void handleKnobValues() {
+  int potA = getKnobValue(KNOB_A, 1, 8);
+  int potB = getKnobValue(KNOB_B, 1, 16);
+  //int potB = round((analogRead(KNOB_B) / 1023.0) * 15.0 + 1.0);
+
+  looper.setGlobalBarCount(potA);
+  looper.setGlobalStepCount(potB);
+}
+
 void loop() {
   MIDI.read();
+
+  if (counter == 50)
+  {
+    int selectedChannel = -1;
+    for (byte i = 0; i < 4; i++) {
+      if (mux.read(i) == LOW) {
+        selectedChannel = i;
+      }
+    }
+    if (selectedChannel > -1) {
+      looper.selectExclusiveTrack(selectedChannel);
+    }
+  }
+
+  if (counter == 100) {
+    byte currentTrack = looper.getCurrentExclusiveTrack();
+    for (byte i = 0; i < 4; i++) {
+      digitalWrite(i+2, currentTrack == i);
+    }
+  }
 
   if (counter >= 200)
   {
     //handleMidiThru();
+    handleKnobValues();
+    
     counter = 0;
     displayManager.update(); 
   }

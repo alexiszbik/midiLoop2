@@ -49,13 +49,15 @@ public:
     Transport* transport = engine->getTransport();
     TrackSettings* settings = engine->getSettings();
 
+    
+
     if (line == 0) {  
 
       display.clearDisplay();
       goToLine(0);
       setInvertedColor(true);
       
-      writeNbr(/*channnel ? */ 1);
+      writeNbr(/*channnel ? */ engine->getCurrentExclusiveTrack() + 1);
 
       setInvertedColor(false);
       display.write(' ');

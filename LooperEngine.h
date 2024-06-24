@@ -58,8 +58,13 @@ public:
         for (byte t = 0; t < TRACK_COUNT; t++) {
             track[t].setIsSelected(trackIndex == t);
         }
+        currentExclusiveTrack = trackIndex;
     }
-    
+
+    byte getCurrentExclusiveTrack() {
+      return currentExclusiveTrack;
+    }
+
     void setGlobalBarCount(byte newBarCount) {
         for (byte t = 0; t < TRACK_COUNT; t++) {
             track[t].setBarCount(newBarCount);
@@ -87,8 +92,8 @@ public:
     }
     
 private:
+    byte currentExclusiveTrack = 0;
     Track track[TRACK_COUNT];
-    
     byte noteChannel = 1;
     
 };
