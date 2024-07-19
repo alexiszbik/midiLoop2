@@ -1,14 +1,26 @@
-
 #include "MIDI.h"
 #include "Mux.h"
+
+using namespace admux;
+Mux mux(Pin(6, INPUT, PinType::Digital), Pinset(7, 8, 9, 10));
+
+#include "Switch.h"
 
 #define KNOB_A A7
 #define KNOB_B A6
 #define KNOB_C A3
 
-using namespace admux;
+#define LED_PLAY 11
+#define LED_REC 12
 
-Mux mux(Pin(6, INPUT, PinType::Digital), Pinset(7, 8, 9, 10));
+#define LED_TRACK_SELECT 2
+
+#define LED_TRACK_PLAY 13
+
+#define MUX_BUTTON_PLAY 4
+#define MUX_BUTTON_CLEAR 5
+#define MUX_BUTTON_SHIFT 6
+#define MUX_BUTTON_REC 7
 
 //for nano every
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
@@ -23,7 +35,6 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 /** End of the super important message **/
 
-
 #include "MidiOut.h"
 #include "LooperEngine.h"
 #include "DisplayManager.h"
@@ -32,18 +43,38 @@ MidiOut midiOut;
 LooperEngine looper = LooperEngine(&midiOut);
 DisplayManager displayManager;
 
-//counter is dirty but works fine
-unsigned int counter = 0;
+Switch recSwitch = Switch(MUX_BUTTON_REC);
+Switch shiftSwitch = Switch(MUX_BUTTON_SHIFT, true);
+Switch clearSwitch = Switch(MUX_BUTTON_CLEAR, true);
 
-#define REC_SWITCH_TEST 3
-//#define ARP_SWITCH_TEST 4
+//counter is dirty but works fine
+
+enum UpdateStep {
+  kRecSwitch = 0,
+  kOtherSwitches,
+  kRecLed,
+  kSelectedChannelSwitches,
+  kSelectedChannelLeds,
+  kKnobs,
+
+  kUpdateStepCount
+};
+
+byte currentUpdateStep = 0;
+unsigned int counter = 0;
+bool shiftState = false;
 
 void setup() {
   Serial.begin(9600);
   Serial1.begin(9600);
 
-  //Serial1.begin(9600);
-  pinMode(LED_BUILTIN, OUTPUT);
+  for (byte i = 0; i < TRACK_COUNT; i++) {
+    pinMode(LED_TRACK_SELECT+i, OUTPUT); 
+    pinMode(LED_TRACK_PLAY+i, OUTPUT); 
+  }
+
+  pinMode(LED_REC, OUTPUT);
+  pinMode(LED_PLAY, OUTPUT);
 
   MIDI.setHandleNoteOn(handleNoteOn);
   MIDI.setHandleNoteOff(handleNoteOff);
@@ -57,23 +88,15 @@ void setup() {
   MIDI.begin(MIDI_CHANNEL);
 
   displayManager.init(&looper);
-
-
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
 }
 
 void handleNoteOn(byte channel, byte note, byte velocity) {
-  digitalWrite(LED_BUILTIN, HIGH);
   if (channel == MIDI_CHANNEL) {
     looper.playNoteOn(note, velocity);
   }
 }
 
 void handleNoteOff(byte channel, byte note, byte velocity) {
-  digitalWrite(LED_BUILTIN, LOW);
   if (channel == MIDI_CHANNEL) {
     looper.playNoteOn(note, 0);
   }
@@ -91,10 +114,15 @@ void handleStart() {
 
 void handleStop() {
   looper.setIsPlaying(false);
+  updatePlayLed();
+  for (byte i = 0; i < 4; i++) {
+    digitalWrite(LED_TRACK_PLAY+i, LOW);
+  }
 }
 
 void handleClock() {
   looper.tick();
+  updatePlayLed();
 }
 
 int getKnobValue(byte pin, int min, int max) {
@@ -110,36 +138,92 @@ void handleKnobValues() {
   looper.setGlobalStepCount(potB);
 }
 
-void loop() {
-  MIDI.read();
+void updatePlayLed() {
+  Transport* tranport = looper.getTransport();
+  bool isQuarter = (tranport->getCurrentStep() % 4) == 0;
+  isQuarter = isQuarter && tranport->getIsPlaying();
+  digitalWrite(LED_PLAY, isQuarter ? HIGH : LOW);
+}
 
-  if (counter == 50)
-  {
-    int selectedChannel = -1;
-    for (byte i = 0; i < 4; i++) {
+void updateRecLed() {
+  TrackSettings* settings = looper.getSettings();
+  digitalWrite(LED_REC, settings->isRecording ? HIGH : LOW);
+}
+
+void updateRecSwitch() {
+  if (recSwitch.debounce()) {
+    if (recSwitch.getState()) {
+      looper.toggleIsRecording();
+    }
+  }
+}
+
+void updateSelectedChannelSwitches() {
+  int selectedChannel = -1;
+    for (byte i = 0; i < TRACK_COUNT; i++) {
       if (mux.read(i) == LOW) {
         selectedChannel = i;
       }
     }
     if (selectedChannel > -1) {
       looper.selectExclusiveTrack(selectedChannel);
-    }
   }
+}
 
-  if (counter == 100) {
-    byte currentTrack = looper.getCurrentExclusiveTrack();
-    for (byte i = 0; i < 4; i++) {
-      digitalWrite(i+2, currentTrack == i);
-    }
+
+void updateOtherSwitches() {
+  if (shiftSwitch.debounce()) {
+    shiftState = shiftSwitch.getState();
   }
-
-  if (counter >= 200)
-  {
-    //handleMidiThru();
-    handleKnobValues();
+  if (clearSwitch.debounce()) {
+    bool clearState = clearSwitch.getState();
+    if (shiftState) {
+      if (clearState) {
+        looper.clearAll();
+      }
+    } else {
+      looper.setEraserState(clearState);
+    }
     
-    counter = 0;
-    displayManager.update(); 
   }
-  counter++;
+}
+
+void updateSelectedChannelLeds() {
+  byte currentTrack = looper.getCurrentExclusiveTrack();
+  for (byte i = 0; i < TRACK_COUNT; i++) {
+    digitalWrite(LED_TRACK_SELECT+i, currentTrack == i);
+  }
+}
+
+void loop() {
+  MIDI.read();
+  
+  if (counter > 20) {
+    switch(currentUpdateStep) {
+
+    case kRecSwitch : updateRecSwitch(); break;
+
+    case kOtherSwitches : updateOtherSwitches(); break;
+
+    case kRecLed : updateRecLed(); break;
+
+    case kSelectedChannelSwitches : updateSelectedChannelSwitches(); break;
+
+    case kSelectedChannelLeds : updateSelectedChannelLeds(); break;
+
+    case kKnobs : handleKnobValues(); break;
+
+    default : break;
+    }
+
+    if (currentUpdateStep == kUpdateStepCount) {
+      displayManager.update();
+      currentUpdateStep = 0;
+    } else {
+      currentUpdateStep++;
+    }
+    counter = 0;
+  } else {
+    counter++;
+  }
 }

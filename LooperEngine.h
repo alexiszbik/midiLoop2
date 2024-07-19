@@ -18,7 +18,7 @@ class LooperEngine {
 public:
     LooperEngine(MidiOut* midiOut) {
         for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].initialize(midiOut);
+            track[t].initialize(t, midiOut);
             track[t].setChannelOut(t + 5); //temp
         }
         track[0].setIsSelected(true);
@@ -37,9 +37,15 @@ public:
     }
     
     void setIsRecording(bool isRecording) {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].setIsRecording(isRecording);
-        }
+      for (byte t = 0; t < TRACK_COUNT; t++) {
+          track[t].setIsRecording(isRecording);
+      }
+    }
+
+    void toggleIsRecording() {
+      for (byte t = 0; t < TRACK_COUNT; t++) {
+          track[t].toggleIsRecording();
+      }
     }
 
     void setUseArp(bool useArp) {
@@ -78,17 +84,19 @@ public:
     }
     
     void clearAll() {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].clearAllSeq();
-        }
+        track[currentExclusiveTrack].clearAllSeq();
+    }
+
+    void setEraserState(bool state) {
+      track[currentExclusiveTrack].setEraserState(state);
     }
 
     Transport* getTransport() {
-        return track[0].getTransport();
+        return track[currentExclusiveTrack].getTransport();
     }
 
     TrackSettings* getSettings() {
-        return track[0].getSettings();
+        return track[currentExclusiveTrack].getSettings();
     }
     
 private:

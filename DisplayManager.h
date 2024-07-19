@@ -49,7 +49,7 @@ public:
     Transport* transport = engine->getTransport();
     TrackSettings* settings = engine->getSettings();
 
-    
+    byte stepsPerBar = settings->stepsPerBar;
 
     if (line == 0) {  
 
@@ -65,11 +65,10 @@ public:
       display.write(CHAR_NOTE);
 
       byte barCount = settings->barCount;
-      byte steps = settings->stepsPerBar;
       
       writeNbr(barCount);
       display.write(':');
-      writeNbr(steps);
+      writeNbr(stepsPerBar);
     }
     else if (line == 16) {
       goToLine(1);
@@ -82,16 +81,16 @@ public:
       goToLine(3);
       display.write(transport->getIsPlaying() ? CHAR_PLAY : CHAR_STOP);
       display.write(' ');
-      display.write(true /* is recording */? CHAR_REC : ' ');
+      display.write(settings->isRecording ? CHAR_REC : ' ');
       display.write(' ');
 
       int step = transport->getCurrentStep();
 
-      writeNbr(/* current bar */1);
+      writeNbr(1 + step/stepsPerBar);
       display.write('.');
-      writeNbr((step % 16)/4);
+      writeNbr(1 + (step % stepsPerBar)/4);
       display.write('.');
-      writeNbr(step % 16);
+      writeNbr(1 + step % stepsPerBar);
     }
     
     display.display();

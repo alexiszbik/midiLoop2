@@ -17,8 +17,9 @@
 
 class Track : public TransportDelegate {
 public:
-    void initialize(MidiOut* midiOut) {
+    void initialize(byte trackIndex, MidiOut* midiOut) {
         this->midiOut = midiOut;
+        this->trackIndex = trackIndex;
     }
     
     void tick() {
@@ -35,13 +36,13 @@ public:
                     arp.removeNote(note);
                 }
             } else {
-                if (settings.isRecording && isPlaying) {
+                if (settings.isRecording && isPlaying && !eraserState) {
                     int step = transport.getRecStep();
                     if (velocity) {
                         sequence[step] = note;
                     }
                 } else {
-                    midiOut->sendNote(settings.channelOut, note, velocity);
+                    midiOut->sendNote(trackIndex, settings.channelOut, note, velocity);
                 }
             }
         }
@@ -49,13 +50,17 @@ public:
     
     virtual void didChangeStep (int newStep) override {
         if (lastNote) {
-            midiOut->sendNote(settings.channelOut, lastNote, 0);
+            midiOut->sendNote(trackIndex, settings.channelOut, lastNote, 0);
             lastNote = 0;
+        }
+
+        if (eraserState) {
+          sequence[newStep] = 0;
         }
         
         byte noteValue = sequence[newStep];
 
-        if (settings.arpIsOn) {
+        if (settings.arpIsOn && !eraserState) {
             byte arpNote  = arp.getNote();
             if (arpNote) {
               noteValue = arpNote;
@@ -67,7 +72,7 @@ public:
         }
         
         if (noteValue) {
-            midiOut->sendNote(settings.channelOut, noteValue, MAX_VELOCITY);
+            midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
             lastNote = noteValue;
         }
     }
@@ -86,9 +91,16 @@ public:
     void setIsRecording(bool isRecording) {
         settings.isRecording = isRecording;
     }
+
+    void toggleIsRecording() {
+        settings.isRecording = !settings.isRecording;
+    }
     
     void setIsSelected(bool isSelected) {
+      if (settings.isSelected != isSelected) {
+        eraserState = false;
         settings.isSelected = isSelected;
+      }
     }
     
     void setChannelOut(byte channelOut) {
@@ -110,6 +122,10 @@ public:
         settings.arpIsOn = state;
     }
 
+    void setEraserState(bool state) {
+      eraserState = state;
+    }
+
     Transport* getTransport() {
       return &transport;
     }
@@ -120,6 +136,7 @@ public:
     
 private:
     byte lastNote = 0;
+    byte trackIndex;
     
 private:
     MidiOut* midiOut;
@@ -127,4 +144,5 @@ private:
     Transport transport = Transport(&settings, this);
     Sequence sequence;
     Arpeggiator arp;
+    bool eraserState = false;
 };
