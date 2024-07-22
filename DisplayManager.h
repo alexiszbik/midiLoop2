@@ -72,8 +72,15 @@ public:
     }
     else if (line == 16) {
       goToLine(1);
-      if (true /* arp state */) {
-        display.write("ARP");
+      switch (settings->trackMode) {
+        case kSequence :
+          display.write("SEQ");
+          break;
+        case kArp :
+          display.write("ARP");
+          break;
+        default :
+          break;
       }
       
     }

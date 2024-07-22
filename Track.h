@@ -29,7 +29,7 @@ public:
     void playNote(byte note, byte velocity) {
         if (settings.isSelected) {
             bool isPlaying = transport.getIsPlaying();
-            if (settings.arpIsOn && isPlaying) {
+            if (settings.useArp() && isPlaying) {
                 if (velocity) {
                     arp.addNote(note);
                 } else {
@@ -60,7 +60,7 @@ public:
         
         byte noteValue = sequence[newStep];
 
-        if (settings.arpIsOn && !eraserState) {
+        if (settings.useArp() && !eraserState) {
             byte arpNote  = arp.getNote();
             if (arpNote) {
               noteValue = arpNote;
@@ -115,11 +115,9 @@ public:
         settings.stepsPerBar = newStepCount;
     }
     
-    void setUseArp(bool state) {
-        if (settings.arpIsOn && !state) {
-            arp.eraseAll();
-        }
-        settings.arpIsOn = state;
+    void setTrackMode(TrackMode trackMode) {
+        arp.eraseAll();
+        settings.trackMode = trackMode;
     }
 
     void setEraserState(bool state) {

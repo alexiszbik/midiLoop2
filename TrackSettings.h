@@ -12,22 +12,13 @@
 
 #define STEP_RESOLUTION 6
 
-#include "Bounded.h"
+#include "BoundedSettings.h"
 
-class StepsPerBar : public Bounded<byte> {
-public:
-    static const byte Min = 1;
-    static const byte Max = 16;
-public:
-    StepsPerBar(byte value) : Bounded(value, Min, Max) {}
-};
+enum TrackMode {
+  kSequence = 0,
+  kArp,
 
-class BarCount : public Bounded<byte> {
-public:
-    static const byte Min = 1;
-    static const byte Max = 8;
-public:
-    BarCount(byte value) : Bounded(value, Min, Max) {}
+  KTrackModeCount
 };
 
 class TrackSettings {
@@ -44,13 +35,17 @@ public:
         return stepResolution;
     }
 
+    bool useArp() {
+      return trackMode == kArp;
+    }
+
 public:
     StepsPerBar stepsPerBar = 16;
     BarCount barCount = 1;
     byte channelOut = 1;
     bool isSelected = false;
     bool isRecording = false;
-    bool arpIsOn = false;
+    TrackMode trackMode = kSequence;
     
 private:
     byte stepResolution = 6; // 24/4 -> 1 sixteenth

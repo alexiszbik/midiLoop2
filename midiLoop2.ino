@@ -46,6 +46,9 @@ DisplayManager displayManager;
 Switch recSwitch = Switch(MUX_BUTTON_REC);
 Switch shiftSwitch = Switch(MUX_BUTTON_SHIFT, true);
 Switch clearSwitch = Switch(MUX_BUTTON_CLEAR, true);
+Switch playSwitch = Switch(MUX_BUTTON_PLAY, true);
+
+Switch channelSwitches[TRACK_COUNT] = {Switch(0), Switch(1), Switch(2), Switch(3)};
 
 //counter is dirty but works fine
 
@@ -159,14 +162,28 @@ void updateRecSwitch() {
 }
 
 void updateSelectedChannelSwitches() {
+
   int selectedChannel = -1;
-    for (byte i = 0; i < TRACK_COUNT; i++) {
-      if (mux.read(i) == LOW) {
-        selectedChannel = i;
+  for (byte i = 0; i < TRACK_COUNT; i++) {
+    if (channelSwitches[i].debounce()) {
+      if (channelSwitches[i].getState() == true) {
+        if (shiftState) {
+          switch(i) {
+            case 0 :
+              looper.toggleTrackMode();
+              break;
+            default :
+              break;
+          }
+        } else {
+          selectedChannel = i;
+        }
+        
       }
     }
-    if (selectedChannel > -1) {
-      looper.selectExclusiveTrack(selectedChannel);
+  }
+  if (selectedChannel > -1) {
+    looper.selectExclusiveTrack(selectedChannel);
   }
 }
 
@@ -183,8 +200,10 @@ void updateOtherSwitches() {
       }
     } else {
       looper.setEraserState(clearState);
-    }
-    
+    } 
+  }
+  if (playSwitch.debounce()) {
+    bool playState = playSwitch.getState();
   }
 }
 

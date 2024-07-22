@@ -44,14 +44,21 @@ public:
 
     void toggleIsRecording() {
       for (byte t = 0; t < TRACK_COUNT; t++) {
-          track[t].toggleIsRecording();
+        track[t].toggleIsRecording();
       }
     }
 
-    void setUseArp(bool useArp) {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].setUseArp(useArp);
-        }
+    void toggleTrackMode() {
+      byte current = track[0].getSettings()->trackMode;
+      current += 1;
+      current = current % KTrackModeCount;
+      setTrackMode((TrackMode)current);
+    }
+
+    void setTrackMode(TrackMode trackMode) {
+      for (byte t = 0; t < TRACK_COUNT; t++) {
+        track[t].setTrackMode(trackMode);
+      }
     }
     
     void playNoteOn(byte note, byte velocity) {
