@@ -48,6 +48,12 @@ public:
       }
     }
 
+    void resetTransport() {
+      for (byte t = 0; t < TRACK_COUNT; t++) {
+        track[t].resetTransport();
+      }
+    }
+
     void toggleTrackMode() {
       byte current = track[0].getSettings()->trackMode;
       current += 1;

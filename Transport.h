@@ -28,7 +28,12 @@ public:
     void tick() {
         if (isPlaying) {
             if (currentTick % settings->getStepResolution() == 0) {
-                currentStep = currentTick/settings->getStepResolution();
+                if (toBeReseted) {
+                  reset();
+                  toBeReseted = false;
+                } else {
+                  currentStep = currentTick/settings->getStepResolution();
+                }
                 delegate->didChangeStep(currentStep);
             }
             currentTick++;
@@ -56,6 +61,10 @@ public:
     int getCurrentStep() {
         return currentStep;
     }
+
+    void willReset() {
+      toBeReseted = true;
+    }
     
 private:
     int getLength() {
@@ -71,6 +80,7 @@ private:
     int currentTick = 0;
     int currentStep = 0;
     bool isPlaying = false;
+    bool toBeReseted = false;
     
     TrackSettings* settings;
     TransportDelegate* delegate;

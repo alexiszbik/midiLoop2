@@ -95,6 +95,10 @@ public:
     void toggleIsRecording() {
         settings.isRecording = !settings.isRecording;
     }
+
+    void resetTransport() {
+      transport.willReset();
+    }
     
     void setIsSelected(bool isSelected) {
       if (settings.isSelected != isSelected) {

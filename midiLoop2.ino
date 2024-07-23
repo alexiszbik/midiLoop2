@@ -22,18 +22,10 @@ Mux mux(Pin(6, INPUT, PinType::Digital), Pinset(7, 8, 9, 10));
 #define MUX_BUTTON_SHIFT 6
 #define MUX_BUTTON_REC 7
 
-//for nano every
+//We use Serial1 for Nano Every
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 #define MIDI_CHANNEL 1
-
-/** THIS IS SUPER IMPORTANT **/
-
-//Use this line instead for Arduino Uno or original Nano
-
-//MIDI_CREATE_DEFAULT_INSTANCE();
-
-/** End of the super important message **/
 
 #include "MidiOut.h"
 #include "LooperEngine.h"
@@ -49,8 +41,6 @@ Switch clearSwitch = Switch(MUX_BUTTON_CLEAR, true);
 Switch playSwitch = Switch(MUX_BUTTON_PLAY, true);
 
 Switch channelSwitches[TRACK_COUNT] = {Switch(0), Switch(1), Switch(2), Switch(3)};
-
-//counter is dirty but works fine
 
 enum UpdateStep {
   kRecSwitch = 0,
@@ -204,6 +194,11 @@ void updateOtherSwitches() {
   }
   if (playSwitch.debounce()) {
     bool playState = playSwitch.getState();
+    if (shiftState) {
+      if (playState) {
+        looper.resetTransport();
+      }
+    }
   }
 }
 
