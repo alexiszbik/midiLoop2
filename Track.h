@@ -47,12 +47,16 @@ public:
             }
         }
     }
+
+    void sendLastNoteOff() {
+      if (lastNote) {
+        midiOut->sendNote(trackIndex, settings.channelOut, lastNote, 0);
+        lastNote = 0;
+      }
+    }
     
     virtual void didChangeStep (int newStep) override {
-        if (lastNote) {
-            midiOut->sendNote(trackIndex, settings.channelOut, lastNote, 0);
-            lastNote = 0;
-        }
+        sendLastNoteOff();
 
         if (eraserState) {
           sequence[newStep] = 0;
@@ -84,6 +88,7 @@ public:
     void setIsPlaying(bool isPlaying) {
         if (!isPlaying) {
             arp.eraseAll();
+            sendLastNoteOff();
         }
         transport.setIsPlaying(isPlaying);
     }
