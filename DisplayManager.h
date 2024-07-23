@@ -76,6 +76,9 @@ public:
         case kSequence :
           display.write("SEQ");
           break;
+        case kSequencePoly :
+          display.write("SEQ(poly)");
+          break;
         case kArp :
           display.write("ARP");
           break;

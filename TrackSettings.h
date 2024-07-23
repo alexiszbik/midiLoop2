@@ -16,6 +16,7 @@
 
 enum TrackMode {
   kSequence = 0,
+  kSequencePoly,
   kArp,
 
   KTrackModeCount
@@ -37,6 +38,10 @@ public:
 
     bool useArp() {
       return trackMode == kArp;
+    }
+
+    bool modeIsPoly() {
+      return trackMode == kSequencePoly;
     }
 
 public:

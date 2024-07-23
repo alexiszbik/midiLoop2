@@ -39,7 +39,11 @@ public:
                 if (settings.isRecording && isPlaying && !eraserState) {
                     int step = transport.getRecStep();
                     if (velocity) {
-                        sequence[step] = note;
+                      if (settings.modeIsPoly()) {
+                        sequence[step].add(note);
+                      } else {
+                        sequence[step].set(note);
+                      }
                     }
                 } else {
                     midiOut->sendNote(trackIndex, settings.channelOut, note, velocity);
@@ -49,36 +53,42 @@ public:
     }
 
     void sendLastNoteOff() {
-      if (lastNote) {
-        midiOut->sendNote(trackIndex, settings.channelOut, lastNote, 0);
-        lastNote = 0;
+      for (byte i = 0; i < SequenceStep::MaxPolyphony; i++) {
+        byte note = lastNote[i];
+        if (note) {
+          midiOut->sendNote(trackIndex, settings.channelOut, note, 0);
+        }
+        lastNote[i] = 0;
       }
+      
     }
     
     virtual void didChangeStep (int newStep) override {
         sendLastNoteOff();
 
         if (eraserState) {
-          sequence[newStep] = 0;
+          sequence[newStep].clear();
         }
-        
-        byte noteValue = sequence[newStep];
 
         if (settings.useArp() && !eraserState) {
-            byte arpNote  = arp.getNote();
+            byte arpNote = arp.getNote();
             if (arpNote) {
-              noteValue = arpNote;
+              if (settings.isRecording) {
+                sequence[newStep].set(arpNote);
+              } else {
+                midiOut->sendNote(trackIndex, settings.channelOut, arpNote, MAX_VELOCITY);
+              }
             }
+        }
 
-            if (settings.isRecording && noteValue) {
-                sequence[newStep] = noteValue;
-            }
+        byte noteCount = sequence[newStep].getCount();
+        
+        for (byte i = 0; i < noteCount; i++) {
+          byte noteValue = sequence[newStep].get(i);
+          midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
+          lastNote[i] = noteValue;
         }
         
-        if (noteValue) {
-            midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
-            lastNote = noteValue;
-        }
     }
 
     void clearAllSeq() {
@@ -142,7 +152,7 @@ public:
     }
     
 private:
-    byte lastNote = 0;
+    byte lastNote[SequenceStep::MaxPolyphony] = {0,0,0,0};
     byte trackIndex;
     
 private:

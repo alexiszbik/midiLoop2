@@ -11,10 +11,10 @@
 #pragma once
 
 #include "TrackSettings.h"
+#include "SequenceStep.h"
 
 class Sequence {
-public:
-  static const byte MaxPolyphony = 4;
+
 public:
     Sequence() {
         clearAll();
@@ -23,13 +23,13 @@ public:
 public:
     void clearAll() {
         for (int i = 0; i < Size; i++) {
-            data[i] = 0;
+            data[i].clear();
         }
     }
 public:
-    byte operator [] (int i) const {return data[i];}
-    byte& operator [] (int i) {return data[i];}
+    SequenceStep operator [] (int i) const {return data[i];}
+    SequenceStep& operator [] (int i) {return data[i];}
 private:
-    static const int Size = StepsPerBar::Max * BarCount::Max * MaxPolyphony;
-    byte data[Size];
+    static const int Size = StepsPerBar::Max * BarCount::Max;
+    SequenceStep data[Size];
 };
