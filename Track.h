@@ -14,6 +14,7 @@
 #include "Sequence.h"
 #include "MidiOut.h"
 #include "Arpeggiator.h"
+#include "NotePool.h"
 
 class Track : public TransportDelegate {
 public:
@@ -52,19 +53,18 @@ public:
         }
     }
 
-    void sendLastNoteOff() {
-      for (byte i = 0; i < SequenceStep::MaxPolyphony; i++) {
-        byte note = lastNote[i];
-        if (note) {
-          midiOut->sendNote(trackIndex, settings.channelOut, note, 0);
-        }
-        lastNote[i] = 0;
+    void sendPlayedNoteOff() {
+      for (byte i = 0; i < playedNote.getSize(); i++) {
+        byte note = playedNote.get(i);
+        midiOut->sendNote(trackIndex, settings.channelOut, note, 0);
       }
+
+      playedNote.clear();
       
     }
     
     virtual void didChangeStep (int newStep) override {
-        sendLastNoteOff();
+        sendPlayedNoteOff();
 
         if (eraserState) {
           sequence[newStep].clear();
@@ -77,6 +77,7 @@ public:
                 sequence[newStep].set(arpNote);
               } else {
                 midiOut->sendNote(trackIndex, settings.channelOut, arpNote, MAX_VELOCITY);
+                playedNote.add(arpNote);
               }
             }
         }
@@ -86,7 +87,7 @@ public:
         for (byte i = 0; i < noteCount; i++) {
           byte noteValue = sequence[newStep].get(i);
           midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
-          lastNote[i] = noteValue;
+          playedNote.add(noteValue);
         }
         
     }
@@ -98,7 +99,7 @@ public:
     void setIsPlaying(bool isPlaying) {
         if (!isPlaying) {
             arp.eraseAll();
-            sendLastNoteOff();
+            sendPlayedNoteOff();
         }
         transport.setIsPlaying(isPlaying);
     }
@@ -152,7 +153,7 @@ public:
     }
     
 private:
-    byte lastNote[SequenceStep::MaxPolyphony] = {0,0,0,0};
+    NotePool playedNote = NotePool(10);
     byte trackIndex;
     
 private:
