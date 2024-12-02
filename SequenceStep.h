@@ -10,6 +10,7 @@ public:
     }
     count = 0;
     pos = 0;
+    hold = false;
   }
 
   void set(byte note) {
@@ -18,7 +19,7 @@ public:
     pos = 1;
   }
 
-  void add(byte note) {
+  void add(byte note, bool hold = false) {
     for (byte i = 0; i < count; i++) {
       if (data[i] == note) {
         return;
@@ -29,6 +30,7 @@ public:
     pos++;
     count = fmin(count, MaxPolyphony);
     pos = pos % MaxPolyphony;
+    this->hold = hold;
   }
 
   byte getCount() {
@@ -39,8 +41,14 @@ public:
     return data[index];
   }
 
+  bool isHold() {
+    return hold;
+  }
+
 private:
   byte count = 0;
   byte pos = 0;
+  bool hold = false;
   byte data[MaxPolyphony];
+
 };

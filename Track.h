@@ -41,7 +41,7 @@ public:
                     int step = transport.getRecStep();
                     if (velocity) {
                       if (settings.modeIsPoly()) {
-                        sequence[step].add(note);
+                        sequence[step].add(note, settings.modeIsHold());
                       } else {
                         sequence[step].set(note);
                       }
@@ -53,53 +53,65 @@ public:
         }
     }
 
-    void sendPlayedNoteOff() {
-      for (byte i = 0; i < playedNote.getSize(); i++) {
-        byte note = playedNote.get(i);
+    void sendNotesOff(NotePool* pool) {
+        for (byte i = 0; i < pool->getSize(); i++) {
+        byte note = pool->get(i);
         midiOut->sendNote(trackIndex, settings.channelOut, note, 0);
       }
-
-      playedNote.clear();
-      
+      pool->clear();
     }
     
     virtual void didChangeStep (int newStep) override {
-        sendPlayedNoteOff();
+        sendNotesOff(&playedNotes);
+
+        auto& step = sequence[newStep];
 
         if (eraserState) {
-          sequence[newStep].clear();
+          step.clear();
         }
 
         if (settings.useArp() && !eraserState) {
             byte arpNote = arp.getNote();
             if (arpNote) {
               if (settings.isRecording) {
-                sequence[newStep].set(arpNote);
+                step.set(arpNote);
               } else {
                 midiOut->sendNote(trackIndex, settings.channelOut, arpNote, MAX_VELOCITY);
-                playedNote.add(arpNote);
+                playedNotes.add(arpNote);
               }
             }
         }
 
-        byte noteCount = sequence[newStep].getCount();
-        
+        byte noteCount = step.getCount();
+
+        bool isHold = step.isHold();
+
+        if (isHold) {
+            sendNotesOff(&holdedNotes);
+        }
+
         for (byte i = 0; i < noteCount; i++) {
-          byte noteValue = sequence[newStep].get(i);
-          midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
-          playedNote.add(noteValue);
+            byte noteValue = step.get(i);
+            midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
+            if (!isHold) {
+                playedNotes.add(noteValue);
+            } else {
+                holdedNotes.add(noteValue);
+            }
         }
         
     }
 
     void clearAllSeq() {
         sequence.clearAll();
+        sendNotesOff(&holdedNotes);
     }
     
     void setIsPlaying(bool isPlaying) {
         if (!isPlaying) {
             arp.eraseAll();
-            sendPlayedNoteOff();
+            sendNotesOff(&playedNotes);
+            sendNotesOff(&holdedNotes);
         }
         transport.setIsPlaying(isPlaying);
     }
@@ -156,7 +168,8 @@ public:
     }
     
 private:
-    NotePool playedNote; //should be static
+    NotePool playedNotes; //should be static
+    NotePool holdedNotes;
     byte trackIndex;
     
 private:

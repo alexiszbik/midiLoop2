@@ -18,6 +18,7 @@ enum TrackMode {
   kSequence = 0,
   kSequencePoly,
   kArp,
+  kHoldPoly,
 
   KTrackModeCount
 };
@@ -41,7 +42,11 @@ public:
     }
 
     bool modeIsPoly() {
-      return trackMode == kSequencePoly;
+      return trackMode == kSequencePoly || trackMode == kHoldPoly;
+    }
+
+    bool modeIsHold() {
+      return trackMode == kHoldPoly;
     }
 
 public:

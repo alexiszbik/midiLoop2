@@ -82,6 +82,9 @@ public:
         case kArp :
           display.write("ARP");
           break;
+        case kHoldPoly :
+          display.write("HOLD(poly)");
+          break;
         default :
           break;
       }
