@@ -117,10 +117,13 @@ public:
     }
     
     void setIsSelected(bool isSelected) {
-      if (settings.isSelected != isSelected) {
-        eraserState = false;
-        settings.isSelected = isSelected;
-      }
+        if (settings.isSelected && !isSelected) {
+            arp.eraseAll();
+        }
+        if (settings.isSelected != isSelected) {
+            eraserState = false;
+            settings.isSelected = isSelected;
+        }
     }
     
     void setChannelOut(byte channelOut) {
@@ -153,7 +156,7 @@ public:
     }
     
 private:
-    NotePool playedNote = NotePool(10);
+    NotePool playedNote; //should be static
     byte trackIndex;
     
 private:

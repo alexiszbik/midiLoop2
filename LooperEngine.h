@@ -19,7 +19,7 @@ public:
     LooperEngine(MidiOut* midiOut) {
         for (byte t = 0; t < TRACK_COUNT; t++) {
             track[t].initialize(t, midiOut);
-            track[t].setChannelOut(t + 5); //temp
+            track[t].setChannelOut(t + 1 + 4); //temp
         }
         track[0].setIsSelected(true);
     }

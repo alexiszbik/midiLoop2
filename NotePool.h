@@ -1,23 +1,37 @@
 
+#pragma once
 
 class NotePool {
 
 public:
-  NotePool(byte maxSize) : maxSize(maxSize) {
+  NotePool(byte maxSize = 10) : maxSize(maxSize) {
     data = (byte*)malloc(sizeof(byte) * maxSize);
   }
+
+protected: 
+    bool contains(byte note) {
+      for (byte i = 0; i < size; i++) {
+        if (data[i] == note) {
+          return true;
+        }
+      }
+      return false;
+    }
+
 public:
-  void clear() {
+  virtual void clear() {
     for (byte i = 0; i < size; i++) {
       data[i] = 0;
     }
     size = 0;
   }
 
-  void add(byte pitch) {
-    if (size < maxSize) {
-      data[size] = pitch;
-      size++;
+  virtual void add(byte pitch) {
+    if (!contains(pitch)) {
+      if (size < maxSize) {
+        data[size] = pitch;
+        size++;
+      }
     }
   }
 
@@ -29,8 +43,8 @@ public:
     return data[pos];
   }
 
-private:
-  byte* data;
+protected:
+  byte* data = nullptr;
   byte maxSize;
   byte size = 0;
 

@@ -72,11 +72,12 @@ void setup() {
   MIDI.setHandleNoteOn(handleNoteOn);
   MIDI.setHandleNoteOff(handleNoteOff);
   MIDI.setHandleControlChange(handleControlChange);
+  MIDI.setHandlePitchBend(handlePitchBend);
   MIDI.setHandleStart(handleStart);
   MIDI.setHandleStop(handleStop);
   MIDI.setHandleClock(handleClock);
 
-  MIDI.turnThruOn();
+  MIDI.turnThruOff();
 
   MIDI.begin(MIDI_CHANNEL);
 
@@ -96,6 +97,12 @@ void handleNoteOff(byte channel, byte note, byte velocity) {
 }
 
 void handleControlChange(byte channel, byte control, byte value) {
+  if (channel == MIDI_CHANNEL) {
+    //looper.controlChange(control, value);
+  }
+}
+
+void handlePitchBend(byte channel, int bend) {
   if (channel == MIDI_CHANNEL) {
     //looper.controlChange(control, value);
   }
@@ -212,7 +219,7 @@ void updateSelectedChannelLeds() {
 void loop() {
   MIDI.read();
   
-  if (counter > 20) {
+  if (counter > 60) {
     switch(currentUpdateStep) {
 
     case kRecSwitch : updateRecSwitch(); break;
@@ -221,7 +228,7 @@ void loop() {
 
     case kRecLed : updateRecLed(); break;
 
-    case kSelectedChannelSwitches : updateSelectedChannelSwitches(); break;
+    case kSelectedChannelSwitches : updateSelectedChannelSwitches(); displayManager.update(); break;
 
     case kSelectedChannelLeds : updateSelectedChannelLeds(); break;
 
