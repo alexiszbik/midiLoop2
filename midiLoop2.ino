@@ -1,9 +1,39 @@
+// ****************************************
+// ******  RETRO-COMPATIBILITY PART *******
+// ****************************************
+
+// LEGACY MIDI COMMANDS
+#define LOOPER_CHANNEL 12
+
+//NOTE ON ->
+#define SELECT_CHANNEL_NOTE 50
+//select channel 1 = 50
+//select channel 2 = 51
+//select channel 3 = 52
+//select channel 4 = 53
+//
+#define MUTE_CHANNEL_NOTE 60
+//mute channel 1 = 60
+//mute channel 2 = 61
+//mute channel 3 = 62
+//mute channel 4 = 63
+//
+//erase all = 70
+#define ERASE_ALL_NOTE 70
+
+//CC ->
+//Bar Count = 10
+//Arp on/off = 20
+#define BAR_COUNT_CC 10 
+#define ARP_ONOFF_CC 20 
+#define REC_ONOFF_CC 40 
+
+// ****************************************
+// ****************************************
+// ****************************************
+
 #include "MIDI.h"
 #include "Mux.h"
-
-using namespace admux;
-Mux mux(Pin(6, INPUT, PinType::Digital), Pinset(7, 8, 9, 10));
-
 #include "Switch.h"
 
 #define KNOB_A A7
@@ -79,27 +109,62 @@ void setup() {
 
   MIDI.turnThruOn();
 
-  MIDI.begin(MIDI_CHANNEL);
+  MIDI.begin(MIDI_CHANNEL_OMNI); //check if there's no performance issues
 
   displayManager.init(&looper);
 }
 
 void handleNoteOn(byte channel, byte note, byte velocity) {
-  if (channel == MIDI_CHANNEL) {
-    looper.playNoteOn(note, velocity);
-  }
+    if (channel == MIDI_CHANNEL) {
+        looper.playNoteOn(note, velocity);
+    }
+    if (channel == LOOPER_CHANNEL) {
+        
+        if (note >= SELECT_CHANNEL_NOTE && note < (SELECT_CHANNEL_NOTE + 4)) {
+            byte channel = note - SELECT_CHANNEL_NOTE;
+            looper.selectExclusiveTrack(channel);
+        }
+        else if (note >= MUTE_CHANNEL_NOTE && note < (MUTE_CHANNEL_NOTE + 4)) {
+            byte channel = note - MUTE_CHANNEL_NOTE;
+            looper.getTrackSettings(channel)->isMuted = (velocity > 0);
+        
+        }  else if (note == ERASE_ALL_NOTE) {
+            if (velocity > 0) {
+                looper.clearAllTracks();
+            }
+        }
+    }
+  
 }
 
 void handleNoteOff(byte channel, byte note, byte velocity) {
-  if (channel == MIDI_CHANNEL) {
-    looper.playNoteOn(note, 0);
-  }
+    if (channel == MIDI_CHANNEL) {
+        looper.playNoteOn(note, 0);
+    }
+    if (channel == LOOPER_CHANNEL) {
+        if (note >= MUTE_CHANNEL_NOTE && note < (MUTE_CHANNEL_NOTE + 4)) {
+            byte channel = note - MUTE_CHANNEL_NOTE;
+            looper.getTrackSettings(channel)->isMuted = false;
+        } 
+    }
 }
 
 void handleControlChange(byte channel, byte control, byte value) {
-  if (channel == MIDI_CHANNEL) {
-    //looper.controlChange(control, value);
-  }
+    if (channel == MIDI_CHANNEL) {
+        //looper.controlChange(control, value);
+    }
+    if (channel == LOOPER_CHANNEL) {
+        if (control == BAR_COUNT_CC) {
+            looper.setGlobalBarCount(value);
+        } else if (control == ARP_ONOFF_CC) {
+            bool useArp = (value >= 64);
+            looper.setTrackMode(useArp ? kArp : kSequence);
+            //arpState.panic(); //Maybe it is safer
+        } else if (control == REC_ONOFF_CC) {
+            bool rec = (value >= 64);
+            looper.setIsRecording(rec);
+        }
+    }
 }
 
 void handlePitchBend(byte channel, int bend) {
@@ -129,13 +194,23 @@ int getKnobValue(byte pin, int min, int max) {
   return round(((float)analogRead(pin)/1024.f)*(max - min) + min);
 }
 
-void handleKnobValues() {
-  int potA = getKnobValue(KNOB_A, 1, 8);
-  int potB = getKnobValue(KNOB_B, 1, 16);
-  //int potB = round((analogRead(KNOB_B) / 1023.0) * 15.0 + 1.0);
+//TODO : make something smart here
+//because it looks like thrash code 
+int prevPotA = 1;
+int prevPotB = 1;
 
-  looper.setGlobalBarCount(potA);
-  looper.setGlobalStepCount(potB);
+void handleKnobValues() {
+    int potA = getKnobValue(KNOB_A, 1, 8);
+    int potB = getKnobValue(KNOB_B, 1, 16);
+
+    if (potA != prevPotA) {
+        prevPotA = potA;
+        looper.setGlobalBarCount(potA);
+    }
+    if (potB != prevPotB) {
+        prevPotB = potB;
+        looper.setGlobalStepCount(potB);
+    }
 }
 
 void updatePlayLed() {
@@ -168,6 +243,9 @@ void updateSelectedChannelSwitches() {
           switch(i) {
             case 0 :
               looper.toggleTrackMode();
+              break;
+            case 1 :
+              looper.toggleMute();
               break;
             default :
               break;

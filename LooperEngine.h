@@ -37,34 +37,38 @@ public:
     }
     
     void setIsRecording(bool isRecording) {
-      for (byte t = 0; t < TRACK_COUNT; t++) {
-          track[t].setIsRecording(isRecording);
-      }
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setIsRecording(isRecording);
+        }
     }
 
     void toggleIsRecording() {
-      for (byte t = 0; t < TRACK_COUNT; t++) {
-        track[t].toggleIsRecording();
-      }
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].toggleIsRecording();
+        }
     }
 
     void resetTransport() {
-      for (byte t = 0; t < TRACK_COUNT; t++) {
-        track[t].resetTransport();
-      }
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].resetTransport();
+        }
     }
 
     void toggleTrackMode() {
-      byte current = track[0].getSettings()->trackMode;
-      current += 1;
-      current = current % KTrackModeCount;
-      setTrackMode((TrackMode)current);
+        byte current = track[0].getSettings()->trackMode; //should replace 0 by currentExclusiveTrack?
+        current += 1;
+        current = current % KTrackModeCount;
+        setTrackMode((TrackMode)current);
+    }
+
+    void toggleMute() {
+        track[currentExclusiveTrack].getSettings()->toggleMute();
     }
 
     void setTrackMode(TrackMode trackMode) {
-      for (byte t = 0; t < TRACK_COUNT; t++) {
-        track[t].setTrackMode(trackMode);
-      }
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setTrackMode(trackMode);
+        }
     }
     
     void playNoteOn(byte note, byte velocity) {
@@ -81,7 +85,7 @@ public:
     }
 
     byte getCurrentExclusiveTrack() {
-      return currentExclusiveTrack;
+        return currentExclusiveTrack;
     }
 
     void setGlobalBarCount(byte newBarCount) {
@@ -100,8 +104,14 @@ public:
         track[currentExclusiveTrack].clearAllSeq();
     }
 
+    void clearAllTracks() {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].clearAllSeq();
+        }
+    }
+
     void setEraserState(bool state) {
-      track[currentExclusiveTrack].setEraserState(state);
+        track[currentExclusiveTrack].setEraserState(state);
     }
 
     Transport* getTransport() {
@@ -111,10 +121,13 @@ public:
     TrackSettings* getSettings() {
         return track[currentExclusiveTrack].getSettings();
     }
+
+    TrackSettings* getTrackSettings(byte trackIndex) {
+        return track[trackIndex].getSettings();
+    }
     
 private:
     byte currentExclusiveTrack = 0;
     Track track[TRACK_COUNT];
     byte noteChannel = 1;
-    
 };

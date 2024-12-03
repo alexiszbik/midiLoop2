@@ -76,8 +76,10 @@ public:
               if (settings.isRecording) {
                 step.set(arpNote);
               } else {
-                midiOut->sendNote(trackIndex, settings.channelOut, arpNote, MAX_VELOCITY);
-                playedNotes.add(arpNote);
+                if (!settings.isMuted) {
+                    midiOut->sendNote(trackIndex, settings.channelOut, arpNote, MAX_VELOCITY);
+                    playedNotes.add(arpNote);
+                }
               }
             }
         }
@@ -92,14 +94,15 @@ public:
 
         for (byte i = 0; i < noteCount; i++) {
             byte noteValue = step.get(i);
-            midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
-            if (!isHold) {
-                playedNotes.add(noteValue);
-            } else {
-                holdedNotes.add(noteValue);
+            if (!settings.isMuted) {
+                midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
+                if (!isHold) {
+                    playedNotes.add(noteValue);
+                } else {
+                    holdedNotes.add(noteValue);
+                }
             }
         }
-        
     }
 
     void clearAllSeq() {
@@ -125,7 +128,7 @@ public:
     }
 
     void resetTransport() {
-      transport.willReset();
+        transport.willReset();
     }
     
     void setIsSelected(bool isSelected) {
@@ -156,19 +159,19 @@ public:
     }
 
     void setEraserState(bool state) {
-      eraserState = state;
+        eraserState = state;
     }
 
     Transport* getTransport() {
-      return &transport;
+        return &transport;
     }
 
     TrackSettings* getSettings() {
-      return &settings;
+        return &settings;
     }
     
 private:
-    NotePool playedNotes; //should be static
+    NotePool playedNotes;
     NotePool holdedNotes;
     byte trackIndex;
     

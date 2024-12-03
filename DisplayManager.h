@@ -6,6 +6,7 @@
 #define CHAR_PLAY 16
 #define CHAR_STOP 219
 #define CHAR_REC 'R'
+#define CHAR_MUTE 'M'
 
 #define BASE_FIG 48
 
@@ -95,7 +96,7 @@ public:
       display.write(transport->getIsPlaying() ? CHAR_PLAY : CHAR_STOP);
       display.write(' ');
       display.write(settings->isRecording ? CHAR_REC : ' ');
-      display.write(' ');
+      display.write(settings->isMuted ? CHAR_MUTE : ' ');
 
       int step = transport->getCurrentStep();
 

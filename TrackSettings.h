@@ -49,12 +49,17 @@ public:
       return trackMode == kHoldPoly;
     }
 
+    void toggleMute() {
+        isMuted = !isMuted;
+    }
+
 public:
     StepsPerBar stepsPerBar = 16;
     BarCount barCount = 1;
     byte channelOut = 1;
     bool isSelected = false;
     bool isRecording = false;
+    bool isMuted = false;
     TrackMode trackMode = kSequence;
     
 private:

@@ -2,6 +2,8 @@
 #define SWITCH_H
 
 using namespace admux;
+Mux mux(Pin(6, INPUT, PinType::Digital), Pinset(7, 8, 9, 10));
+
 
 class Switch {
 public:
