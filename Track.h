@@ -86,7 +86,7 @@ public:
 
         bool isHold = step.isHold();
 
-        if (isHold) {
+        if (noteCount > 0) {
             sendNotesOff(&holdedNotes);
         }
 

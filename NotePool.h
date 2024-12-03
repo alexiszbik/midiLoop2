@@ -4,7 +4,7 @@
 class NotePool {
 
 public:
-  NotePool(byte maxSize = 10) : maxSize(maxSize) {
+  NotePool(byte maxSize = 4) : maxSize(maxSize) {
     data = (byte*)malloc(sizeof(byte) * maxSize);
   }
 

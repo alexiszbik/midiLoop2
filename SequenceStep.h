@@ -17,6 +17,7 @@ public:
     data[0] = note;
     count = 1;
     pos = 1;
+    hold = false;
   }
 
   void add(byte note, bool hold = false) {
