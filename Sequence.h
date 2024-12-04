@@ -26,6 +26,12 @@ public:
             data[i].clear();
         }
     }
+
+    void fill(int stepCount) {
+        for (int i = stepCount; i < Size; i++) {
+            data[i] = data[i % stepCount];
+        }
+    }
 public:
     SequenceStep operator [] (int i) const {return data[i];}
     SequenceStep& operator [] (int i) {return data[i];}

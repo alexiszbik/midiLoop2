@@ -110,6 +110,10 @@ public:
         }
     }
 
+    void fill() {
+        track[currentExclusiveTrack].fill();
+    }
+
     void setEraserState(bool state) {
         track[currentExclusiveTrack].setEraserState(state);
     }

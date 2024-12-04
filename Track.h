@@ -169,6 +169,10 @@ public:
     TrackSettings* getSettings() {
         return &settings;
     }
+
+    void fill() {
+        sequence.fill(settings.getStepCount());
+    }
     
 private:
     NotePool playedNotes;

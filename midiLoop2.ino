@@ -25,7 +25,8 @@
 //Bar Count = 10
 //Arp on/off = 20
 #define BAR_COUNT_CC 10 
-#define ARP_ONOFF_CC 20 
+#define ARP_ONOFF_CC 20
+#define SEQ_FILL_CC 30
 #define REC_ONOFF_CC 40 
 
 // ****************************************
@@ -160,6 +161,8 @@ void handleControlChange(byte channel, byte control, byte value) {
             bool useArp = (value >= 64);
             looper.setTrackMode(useArp ? kArp : kSequence);
             //arpState.panic(); //Maybe it is safer
+        } else if (control == SEQ_FILL_CC) {
+            looper.fill();
         } else if (control == REC_ONOFF_CC) {
             bool rec = (value >= 64);
             looper.setIsRecording(rec);
@@ -246,6 +249,11 @@ void updateSelectedChannelSwitches() {
               break;
             case 1 :
               looper.toggleMute();
+              break;
+            case 2 :
+              break;
+            case 3 :
+              looper.fill();
               break;
             default :
               break;
