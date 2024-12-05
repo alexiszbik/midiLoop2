@@ -118,6 +118,11 @@ public:
         track[currentExclusiveTrack].setEraserState(state);
     }
 
+
+    void setModulationWheel(byte value) {
+        track[currentExclusiveTrack].setModulationWheel(value);
+    }
+
     Transport* getTransport() {
         return track[currentExclusiveTrack].getTransport();
     }

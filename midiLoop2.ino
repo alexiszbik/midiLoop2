@@ -152,6 +152,10 @@ void handleNoteOff(byte channel, byte note, byte velocity) {
 
 void handleControlChange(byte channel, byte control, byte value) {
     if (channel == MIDI_CHANNEL) {
+        if (control == 1) { // modulation wheel ?
+            //MIDI.sendControlChange(control, value, 5);
+            looper.setModulationWheel(value);
+        }
         //looper.controlChange(control, value);
     }
     if (channel == LOOPER_CHANNEL) {

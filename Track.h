@@ -134,6 +134,7 @@ public:
     void setIsSelected(bool isSelected) {
         if (settings.isSelected && !isSelected) {
             arp.eraseAll();
+            setModulationWheel(0);
         }
         if (settings.isSelected != isSelected) {
             eraserState = false;
@@ -174,6 +175,10 @@ public:
         sequence.fill(settings.getStepCount());
     }
     
+    void setModulationWheel(byte value) {
+        midiOut->sendModulationWheel(settings.channelOut, value);
+    }
+
 private:
     NotePool playedNotes;
     NotePool holdedNotes;

@@ -24,4 +24,8 @@ public:
         MIDI.sendNoteOn(pitch, velocity, channel);
 #endif
     }
+
+    virtual void sendModulationWheel(byte channel, byte value) {
+        MIDI.sendControlChange(1,value,channel);
+    }
 };
