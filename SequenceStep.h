@@ -4,6 +4,19 @@ public:
   static const byte MaxPolyphony = 4;
 
 public:
+    SequenceStep() { 
+    }
+
+    SequenceStep(const SequenceStep& other) {
+        count = other.count;
+        pos = other.pos;
+        hold = other.hold;
+        for (int i = 0; i < MaxPolyphony; i++) {
+             data[i] = other.data[i];
+        }
+    }
+
+public:
   void clear() {
     for (byte i = 0; i < MaxPolyphony; i++) {
       data[i] = 0;

@@ -32,6 +32,18 @@ public:
             data[i] = data[i % stepCount];
         }
     }
+
+    void copy(Sequence* other) {
+        clearAll();
+        for (int i = 0; i < Size; i++) {
+            data[i] = other->at(i);
+        }
+    }
+
+    SequenceStep at(int i) {
+        return data[i];
+    }
+
 public:
     SequenceStep operator [] (int i) const {return data[i];}
     SequenceStep& operator [] (int i) {return data[i];}

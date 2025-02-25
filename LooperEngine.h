@@ -11,6 +11,7 @@
 #pragma once
 
 #include "Track.h"
+#include "CopyPaste.h"
 
 #define TRACK_COUNT 4
 
@@ -63,6 +64,10 @@ public:
 
     void toggleMute() {
         track[currentExclusiveTrack].getSettings()->toggleMute();
+    }
+
+    void copyPaste() {
+        clipboard.toggle(&track[currentExclusiveTrack]);
     }
 
     void setTrackMode(TrackMode trackMode) {
@@ -118,7 +123,6 @@ public:
         track[currentExclusiveTrack].setEraserState(state);
     }
 
-
     void setModulationWheel(byte value) {
         track[currentExclusiveTrack].setModulationWheel(value);
     }
@@ -139,4 +143,5 @@ private:
     byte currentExclusiveTrack = 0;
     Track track[TRACK_COUNT];
     byte noteChannel = 1;
+    CopyPaste clipboard;
 };

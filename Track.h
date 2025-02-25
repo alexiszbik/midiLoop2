@@ -171,6 +171,10 @@ public:
         return &settings;
     }
 
+    Sequence* getSequence() {
+        return &sequence;
+    }
+
     void fill() {
         sequence.fill(settings.getStepCount());
     }
@@ -183,8 +187,7 @@ private:
     NotePool playedNotes;
     NotePool holdedNotes;
     byte trackIndex;
-    
-private:
+
     MidiOut* midiOut;
     TrackSettings settings;
     Transport transport = Transport(&settings, this);
