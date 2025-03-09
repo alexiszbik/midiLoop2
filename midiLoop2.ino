@@ -137,6 +137,9 @@ void handleControlChange(byte channel, byte control, byte value) {
             looper.setIsRecording(rec);
         } else if (control == COPY_PASTE) {
             looper.copyPaste();
+        } else if (control >= MUTE_CHANNEL_CC && control < (MUTE_CHANNEL_CC + 4)) {
+            byte channel = control - MUTE_CHANNEL_CC;
+            looper.getTrackSettings(channel)->isMuted = (value > 64);
         }
     }
 }
