@@ -70,6 +70,16 @@ public:
         clipboard.toggle(&track[currentExclusiveTrack]);
     }
 
+    void copy(byte channel) {
+        channel = fmax(fmin(channel, 3), 0);
+        clipboard.copy(&track[channel]);
+    }
+
+    void paste(byte channel) {
+        channel = fmax(fmin(channel, 3), 0);
+        clipboard.paste(&track[channel]);
+    }
+
     void setTrackMode(TrackMode trackMode) {
         for (byte t = 0; t < TRACK_COUNT; t++) {
             track[t].setTrackMode(trackMode);

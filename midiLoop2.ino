@@ -1,5 +1,6 @@
 #include "MIDI.h"
 #include "Mux.h"
+
 #include "Switch.h"
 #include "MIDITable.h"
 
@@ -135,11 +136,13 @@ void handleControlChange(byte channel, byte control, byte value) {
         } else if (control == REC_ONOFF_CC) {
             bool rec = (value >= 64);
             looper.setIsRecording(rec);
-        } else if (control == COPY_PASTE) {
-            looper.copyPaste();
         } else if (control >= MUTE_CHANNEL_CC && control < (MUTE_CHANNEL_CC + 4)) {
             byte channel = control - MUTE_CHANNEL_CC;
             looper.getTrackSettings(channel)->isMuted = (value > 64);
+        } else if (control == COPY_CC) {
+            looper.copy(value);
+        } else if (control == PASTE_CC) {
+            looper.paste(value);
         }
     }
 }
