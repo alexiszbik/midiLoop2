@@ -1,5 +1,9 @@
 MIDI LOOPER v2
 
+Warning : Library depedencies
+The code is compatible with Adafruit_SSD1306 v2.5.9. 
+I rewrote the Screen.h for this library in order to have less latency with MIDI. I didn't test with newer version.
+
 more informations soon ...
 
 Schematic now available :
