@@ -12,8 +12,8 @@
 
 template <class T> class Bounded {
 public:
-    Bounded(T value, T minValue, T maxValue) : value(value), minValue(minValue), maxValue(maxValue) {
-        value = fmax(fmin(value, maxValue), minValue);
+    Bounded(T value, T minValue, T maxValue) : minValue(minValue), maxValue(maxValue) {
+        this->value = fmax(fmin(value, maxValue), minValue);
     }
     
     operator T() {
