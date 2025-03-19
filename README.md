@@ -1,10 +1,22 @@
 MIDI LOOPER v2
 
 Warning : Library depedencies
-The code is compatible with Adafruit_SSD1306 v2.5.9. 
+You will need those libraries to build the looper.
+
+### arduino-ad-mux-lib v1.1.14
+https://github.com/stechio/arduino-ad-mux-lib
+
+### Adafruit_SSD1306 v2.5.9 
+https://github.com/adafruit/Adafruit_SSD1306
 I rewrote the Screen.h for this library in order to have less latency with MIDI. I didn't test with newer version.
 
+### arduino_midi_library
+https://github.com/FortySevenEffects/arduino_midi_library
+
 more informations soon ...
+For MIDI messages, check MidiTable.h
+
+/!\ This project doesn't send any MIDI clock by itself, you will need a sync clock provider plugged on MIDI IN
 
 Schematic now available :
 
