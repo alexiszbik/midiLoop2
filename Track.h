@@ -38,13 +38,18 @@ public:
                 }
             } else {
                 if (settings.isRecording && isPlaying && !eraserState) {
-                    int step = transport.getRecStep();
+                    bool playNote = false;
+                    int step = transport.getRecStep(&playNote);
                     if (velocity) {
                       if (settings.modeIsPoly()) {
                         sequence[step].add(note, settings.modeIsHold());
                       } else {
                         sequence[step].set(note);
                       }
+                    }
+                    if (playNote) {
+                        midiOut->sendNote(trackIndex, settings.channelOut, note, velocity);
+                        playedNotes.add(note);
                     }
                 } else {
                     midiOut->sendNote(trackIndex, settings.channelOut, note, velocity);

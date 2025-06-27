@@ -52,9 +52,13 @@ public:
         return this->isPlaying;
     }
     
-    int getRecStep() {
+    int getRecStep(bool* playNote) {
         int stepCount = settings->getStepCount();
-        int step = ceil((float)currentTick/(float)settings->getStepResolution());
+        float stepRatio = (float)currentTick/(float)settings->getStepResolution();
+        float ratioFrac = stepRatio - floor(stepRatio);
+        bool quantizeDown = ratioFrac < 0.5;
+        *playNote = quantizeDown;
+        int step = quantizeDown ? floor(stepRatio) : ceil(stepRatio);
         return (step + stepCount) % stepCount;
     }
 
