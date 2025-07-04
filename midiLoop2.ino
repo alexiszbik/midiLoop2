@@ -71,7 +71,7 @@ bool shiftState = false;
 
 void setup() {
   Serial.begin(9600);
-  Serial1.begin(9600);
+  Serial1.begin(31250); //MIDI baud rate
 
   for (byte i = 0; i < TRACK_COUNT; i++) {
     pinMode(LED_TRACK_SELECT+i, OUTPUT); 
