@@ -55,7 +55,7 @@ public:
 
 public:
     StepsPerBar stepsPerBar = 16;
-    BarCount barCount = 1;
+    BarCount barCount = 8;
     byte channelOut = 1;
     bool isSelected = false;
     bool isRecording = false;

@@ -2,6 +2,7 @@
 #include "Mux.h"
 
 #include "Switch.h"
+#include "Knob.h"
 #include "MIDITable.h"
 
 #define KNOB_A A7
@@ -39,6 +40,19 @@ Switch clearSwitch = Switch(MUX_BUTTON_CLEAR, true);
 Switch playSwitch = Switch(MUX_BUTTON_PLAY, true);
 
 Switch channelSwitches[TRACK_COUNT] = {Switch(0), Switch(1), Switch(2), Switch(3)};
+
+
+Knob knobA(
+  KNOB_A,
+  KnobState(Range(1, 8), [](int v) {  }),
+  KnobState(Range(1, 8), [](int v) { looper.setGlobalBarCount(v); })
+);
+
+Knob knobB(
+  KNOB_B,
+  KnobState(Range(1, 16), [](int v) {  }),
+  KnobState(Range(1, 16), [](int v) { looper.setGlobalStepCount(v); })
+);
 
 enum UpdateStep {
   kRecSwitch = 0,
@@ -170,27 +184,9 @@ void handleClock() {
   updatePlayLed();
 }
 
-int getKnobValue(byte pin, int min, int max) {
-  return round(((float)analogRead(pin)/1024.f)*(max - min) + min);
-}
-
-//TODO : make something smart here
-//because it looks like thrash code 
-int prevPotA = 1;
-int prevPotB = 1;
-
 void handleKnobValues() {
-    int potA = getKnobValue(KNOB_A, 1, 8);
-    int potB = getKnobValue(KNOB_B, 1, 16);
-
-    if (potA != prevPotA) {
-        prevPotA = potA;
-        looper.setGlobalBarCount(potA);
-    }
-    if (potB != prevPotB) {
-        prevPotB = potB;
-        looper.setGlobalStepCount(potB);
-    }
+  knobA.check(shiftState);
+  knobB.check(shiftState);
 }
 
 void updatePlayLed() {
