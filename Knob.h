@@ -1,17 +1,17 @@
 struct Range {
-    int minVal;
-    int maxVal;
+    byte minVal;
+    byte maxVal;
 
-    Range(int minV = 0, int maxV = 1023) : minVal(minV), maxVal(maxV) {}
+    Range(byte minV = 0, byte maxV = 127) : minVal(minV), maxVal(maxV) {}
 };
 
 struct KnobState {
     Range range;
     float prevValue = -1;
     const float threshold = 128.f;
-    void (*onChange)(int);
+    void (*onChange)(byte);
 
-    KnobState(Range r = Range(), void (*cb)(int) = nullptr)
+    KnobState(Range r = Range(), void (*cb)(byte) = nullptr)
         : range(r), onChange(cb) {}
 
     bool shouldUpdate(float currentValue) {
@@ -36,7 +36,7 @@ struct Knob {
          KnobState shift)
         : pin(p), normalState(normal), shiftState(shift) {}
 
-    int getValue(float rawValue, const Range& range) {
+    byte getValue(float rawValue, const Range& range) {
         return round((rawValue / 1023.f) * (range.maxVal - range.minVal) + range.minVal);
     }
 

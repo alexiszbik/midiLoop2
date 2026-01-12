@@ -62,7 +62,6 @@ public:
 
       setInvertedColor(false);
       display.write(' ');
-      setInvertedColor(false);
       display.write(CHAR_NOTE);
 
       byte barCount = settings->barCount;
@@ -98,7 +97,7 @@ public:
       display.write(settings->isRecording ? CHAR_REC : ' ');
       display.write(settings->isMuted ? CHAR_MUTE : ' ');
 
-      int step = transport->getCurrentStep();
+      byte step = transport->getCurrentStep();
 
       writeNbr(1 + step/stepsPerBar);
       display.write('.');

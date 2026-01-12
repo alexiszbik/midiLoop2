@@ -30,6 +30,7 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 #include "LooperEngine.h"
 #include "DisplayManager.h"
 
+unsigned long lifeTime = 0;
 MidiOut midiOut;
 LooperEngine looper = LooperEngine(&midiOut);
 DisplayManager displayManager;
@@ -41,17 +42,22 @@ Switch playSwitch = Switch(MUX_BUTTON_PLAY, true);
 
 Switch channelSwitches[TRACK_COUNT] = {Switch(0), Switch(1), Switch(2), Switch(3)};
 
-
 Knob knobA(
   KNOB_A,
-  KnobState(Range(1, 8), [](int v) {  }),
-  KnobState(Range(1, 8), [](int v) { looper.setGlobalBarCount(v); })
+  KnobState(Range(1, 16), [](byte v) {  }),
+  KnobState(Range(1, 8), [](byte v) { looper.setGlobalBarCount(v); })
 );
 
 Knob knobB(
   KNOB_B,
-  KnobState(Range(1, 16), [](int v) {  }),
-  KnobState(Range(1, 16), [](int v) { looper.setGlobalStepCount(v); })
+  KnobState(Range(1, 16), [](byte v) {  }),
+  KnobState(Range(1, 16), [](byte v) { looper.setGlobalStepCount(v); })
+);
+
+Knob knobC(
+  KNOB_C,
+  KnobState(Range(1, 16), [](byte v) {  }),
+  KnobState(Range(0, 50), [](byte v) { looper.setGroove(v); })
 );
 
 enum UpdateStep {
@@ -70,6 +76,7 @@ unsigned int counter = 0;
 bool shiftState = false;
 
 void setup() {
+  delay(200);
   Serial.begin(9600);
   Serial1.begin(31250); //MIDI baud rate
 
@@ -180,6 +187,9 @@ void handleStop() {
 }
 
 void handleClock() {
+  unsigned long newTime = millis();
+  unsigned long delta = newTime - lifeTime;
+  lifeTime = newTime;
   looper.tick();
   updatePlayLed();
 }
@@ -251,7 +261,9 @@ void updateOtherSwitches() {
   }
   if (clearSwitch.debounce()) {
     bool clearState = clearSwitch.getState();
+    
     if (shiftState) {
+        digitalWrite(LED_BUILTIN, clearState ? HIGH : LOW);
       if (clearState) {
         looper.clearAll();
       }
@@ -277,24 +289,31 @@ void updateSelectedChannelLeds() {
 }
 
 void loop() {
+
+  if (lifeTime == 0) {
+    lifeTime = millis();
+    return;
+  }
+
   MIDI.read();
+  looper.loop();
   
   if (counter > 60) {
     switch(currentUpdateStep) {
 
-    case kRecSwitch : updateRecSwitch(); break;
+      case kRecSwitch : updateRecSwitch(); break;
 
-    case kOtherSwitches : updateOtherSwitches(); break;
+      case kOtherSwitches : updateOtherSwitches(); break;
 
-    case kRecLed : updateRecLed(); break;
+      case kRecLed : updateRecLed(); break;
 
-    case kSelectedChannelSwitches : updateSelectedChannelSwitches(); displayManager.update(); break;
+      case kSelectedChannelSwitches : updateSelectedChannelSwitches(); displayManager.update(); break;
 
-    case kSelectedChannelLeds : updateSelectedChannelLeds(); break;
+      case kSelectedChannelLeds : updateSelectedChannelLeds(); break;
 
-    case kKnobs : handleKnobValues(); break;
+      case kKnobs : handleKnobValues(); break;
 
-    default : break;
+      default : break;
     }
 
     if (currentUpdateStep == kUpdateStepCount) {

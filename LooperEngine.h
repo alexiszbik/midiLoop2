@@ -36,6 +36,12 @@ public:
             track[t].setIsPlaying(isPlaying);
         }
     }
+
+    void setGroove(int groove) {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].setGroove(groove);
+        }
+    }
     
     void setIsRecording(bool isRecording) {
         for (byte t = 0; t < TRACK_COUNT; t++) {
@@ -145,8 +151,19 @@ public:
         return track[currentExclusiveTrack].getSettings();
     }
 
+    Transport* getTrackTransport(byte trackIndex) {
+        return track[trackIndex].getTransport();
+    }
+
     TrackSettings* getTrackSettings(byte trackIndex) {
         return track[trackIndex].getSettings();
+    }
+
+    void loop() {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            Transport* transport = getTrackTransport(t);
+            //transport.loop();
+        }
     }
     
 private:

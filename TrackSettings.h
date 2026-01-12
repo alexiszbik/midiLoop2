@@ -14,7 +14,7 @@
 
 #include "BoundedSettings.h"
 
-enum TrackMode {
+enum TrackMode : byte {
   kSequence = 0,
   kSequencePoly,
   kArp,

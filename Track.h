@@ -21,6 +21,9 @@ public:
     void initialize(byte trackIndex, MidiOut* midiOut) {
         this->midiOut = midiOut;
         this->trackIndex = trackIndex;
+
+        playedNotes.initialize(midiOut, trackIndex, &settings);
+        holdedNotes.initialize(midiOut, trackIndex, &settings);
     }
     
     void tick() {
@@ -39,35 +42,28 @@ public:
             } else {
                 if (settings.isRecording && isPlaying && !eraserState) {
                     bool playNote = false;
-                    int step = transport.getRecStep(&playNote);
                     if (velocity) {
-                      if (settings.modeIsPoly()) {
-                        sequence[step].add(note, settings.modeIsHold());
-                      } else {
-                        sequence[step].set(note);
-                      }
+                        int step = transport.getRecStep(&playNote); 
+                        if (settings.modeIsPoly()) {
+                            sequence[step].add(note, settings.modeIsHold());
+                        } else {
+                            sequence[step].set(note);
+                        }
+                        if (playNote) {
+                            playedNotes.add(note);
+                        }
                     }
-                    if (playNote) {
-                        midiOut->sendNote(trackIndex, settings.channelOut, note, velocity);
-                        playedNotes.add(note);
-                    }
+                    
+                    
                 } else {
                     midiOut->sendNote(trackIndex, settings.channelOut, note, velocity);
                 }
             }
         }
     }
-
-    void sendNotesOff(NotePool* pool) {
-        for (byte i = 0; i < pool->getSize(); i++) {
-        byte note = pool->get(i);
-        midiOut->sendNote(trackIndex, settings.channelOut, note, 0);
-      }
-      pool->clear();
-    }
     
     virtual void didChangeStep (int newStep) override {
-        sendNotesOff(&playedNotes);
+        playedNotes.sendNotesOff();
 
         auto& step = sequence[newStep];
 
@@ -75,6 +71,7 @@ public:
           step.clear();
         }
 
+        //play notes from arpeggiator
         if (settings.useArp() && !eraserState) {
             byte arpNote = arp.getNote();
             if (arpNote) {
@@ -82,25 +79,25 @@ public:
                 step.set(arpNote);
               } else {
                 if (!settings.isMuted) {
-                    midiOut->sendNote(trackIndex, settings.channelOut, arpNote, MAX_VELOCITY);
                     playedNotes.add(arpNote);
                 }
               }
             }
         }
 
+        //play notes from sequence
         byte noteCount = step.getCount();
 
         bool isHold = step.isHold();
 
         if (noteCount > 0) {
-            sendNotesOff(&holdedNotes);
+            holdedNotes.sendNotesOff();
         }
 
         for (byte i = 0; i < noteCount; i++) {
             byte noteValue = step.get(i);
+            
             if (!settings.isMuted) {
-                midiOut->sendNote(trackIndex, settings.channelOut, noteValue, MAX_VELOCITY);
                 if (!isHold) {
                     playedNotes.add(noteValue);
                 } else {
@@ -112,14 +109,14 @@ public:
 
     void clearAllSeq() {
         sequence.clearAll();
-        sendNotesOff(&holdedNotes);
+        holdedNotes.sendNotesOff();
     }
     
     void setIsPlaying(bool isPlaying) {
         if (!isPlaying) {
             arp.eraseAll();
-            sendNotesOff(&playedNotes);
-            sendNotesOff(&holdedNotes);
+            holdedNotes.sendNotesOff();
+            playedNotes.sendNotesOff();
         }
         transport.setIsPlaying(isPlaying);
     }
@@ -134,6 +131,10 @@ public:
 
     void resetTransport() {
         transport.willReset();
+    }
+
+    void setGroove(byte groove) {
+        transport.setGroove(groove);
     }
     
     void setIsSelected(bool isSelected) {
@@ -164,7 +165,7 @@ public:
         settings.trackMode = trackMode;
     }
 
-    void setEraserState(bool state) {
+    inline void setEraserState(bool state) {
         eraserState = state;
     }
 
@@ -189,12 +190,13 @@ public:
     }
 
 private:
+    TrackSettings settings;
     NotePool playedNotes;
     NotePool holdedNotes;
     byte trackIndex;
 
     MidiOut* midiOut;
-    TrackSettings settings;
+
     Transport transport = Transport(&settings, this);
     Sequence sequence;
     Arpeggiator arp;

@@ -15,3 +15,11 @@ public:
 public:
     BarCount(byte value) : Bounded(value, Min, Max) {}
 };
+/*
+class OctaveDrift : public Bounded<byte> {
+public:
+    static const byte Min = 0;
+    static const byte Max = 3;
+public:
+    OctaveDrift(byte value) : Bounded(value, Min, Max) {}
+};*/
