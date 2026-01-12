@@ -108,7 +108,7 @@ class Screen : public Adafruit_SSD1306 {
         SSD1306_COLUMNADDR, 0}; // Column start address
    
 
-    long actionCount = 0;
+    byte actionCount = 0;
 
     if (count == 0) {
       TRANSACTION_START

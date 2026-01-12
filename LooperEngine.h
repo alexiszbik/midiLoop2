@@ -161,9 +161,10 @@ public:
 
     void loop() {
         for (byte t = 0; t < TRACK_COUNT; t++) {
-            Transport* transport = getTrackTransport(t);
-            //transport.loop();
+            track[t].processNotesOn();
+            //Transport* transport = getTrackTransport(t);
         }
+        
     }
     
 private:

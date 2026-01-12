@@ -78,6 +78,10 @@ public:
     this->groove = groove;
   }
 
+  byte getGroove() {
+    return groove;
+  }
+
   void loop() {
   }
 

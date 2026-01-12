@@ -50,13 +50,13 @@ public:
                             sequence[step].set(note);
                         }
                         if (playNote) {
-                            playedNotes.add(note);
+                            playedNotes.load(note);
                         }
                     }
                     
                     
                 } else {
-                    midiOut->sendNote(trackIndex, settings.channelOut, note, velocity);
+                    midiOut->sendNote(trackIndex, settings.channelOut, note, velocity); //Send note right now
                 }
             }
         }
@@ -79,7 +79,7 @@ public:
                 step.set(arpNote);
               } else {
                 if (!settings.isMuted) {
-                    playedNotes.add(arpNote);
+                    playedNotes.load(arpNote);
                 }
               }
             }
@@ -99,9 +99,9 @@ public:
             
             if (!settings.isMuted) {
                 if (!isHold) {
-                    playedNotes.add(noteValue);
+                    playedNotes.load(noteValue);
                 } else {
-                    holdedNotes.add(noteValue);
+                    holdedNotes.load(noteValue);
                 }
             }
         }
@@ -110,6 +110,11 @@ public:
     void clearAllSeq() {
         sequence.clearAll();
         holdedNotes.sendNotesOff();
+    }
+
+    void processNotesOn() {
+        playedNotes.processNotesOn();
+        holdedNotes.processNotesOn();
     }
     
     void setIsPlaying(bool isPlaying) {

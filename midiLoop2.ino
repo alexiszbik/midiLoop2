@@ -44,23 +44,23 @@ Switch channelSwitches[TRACK_COUNT] = {Switch(0), Switch(1), Switch(2), Switch(3
 
 Knob knobA(
   KNOB_A,
-  KnobState(Range(1, 16), [](byte v) {  }),
+  KnobState(Range(), [](byte v) {  }),
   KnobState(Range(1, 8), [](byte v) { looper.setGlobalBarCount(v); })
 );
 
 Knob knobB(
   KNOB_B,
-  KnobState(Range(1, 16), [](byte v) {  }),
-  KnobState(Range(1, 16), [](byte v) { looper.setGlobalStepCount(v); })
+  KnobState(Range(), [](byte v) {  }),
+  KnobState(Range(), [](byte v) { looper.setGlobalStepCount(v); })
 );
 
 Knob knobC(
   KNOB_C,
-  KnobState(Range(1, 16), [](byte v) {  }),
+  KnobState(Range(), [](byte v) {  }),
   KnobState(Range(0, 50), [](byte v) { looper.setGroove(v); })
 );
 
-enum UpdateStep {
+enum UpdateStep : byte {
   kRecSwitch = 0,
   kOtherSwitches,
   kRecLed,
@@ -72,7 +72,7 @@ enum UpdateStep {
 };
 
 byte currentUpdateStep = 0;
-unsigned int counter = 0;
+byte counter = 0;
 bool shiftState = false;
 
 void setup() {
@@ -190,6 +190,7 @@ void handleClock() {
   unsigned long newTime = millis();
   unsigned long delta = newTime - lifeTime;
   lifeTime = newTime;
+
   looper.tick();
   updatePlayLed();
 }
@@ -197,6 +198,7 @@ void handleClock() {
 void handleKnobValues() {
   knobA.check(shiftState);
   knobB.check(shiftState);
+  knobC.check(shiftState);
 }
 
 void updatePlayLed() {
@@ -303,7 +305,7 @@ void loop() {
 
       case kRecSwitch : updateRecSwitch(); break;
 
-      case kOtherSwitches : updateOtherSwitches(); break;
+      case kOtherSwitches : updateOtherSwitches(); displayManager.update(); break;
 
       case kRecLed : updateRecLed(); break;
 

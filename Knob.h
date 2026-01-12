@@ -2,7 +2,7 @@ struct Range {
     byte minVal;
     byte maxVal;
 
-    Range(byte minV = 0, byte maxV = 127) : minVal(minV), maxVal(maxV) {}
+    Range(byte minV = 1, byte maxV = 16) : minVal(minV), maxVal(maxV) {}
 };
 
 struct KnobState {
