@@ -1,4 +1,4 @@
-
+#pragma once
 
 #define DEFAULT_TEMPO 120
 
@@ -37,7 +37,7 @@ public:
 private:
   unsigned long lifeTime = 0;
 
-  static constexpr int nbBpm = 10;
+  static constexpr int nbBpm = 24;
   float bpmList[nbBpm];
   byte bpmListIndex = 0;
   int tempo = DEFAULT_TEMPO;

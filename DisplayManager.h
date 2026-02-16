@@ -103,7 +103,7 @@ public:
       }
     } else if (line == 24) {
       goToLine(2);
-      int tempo = transport->getTempo();
+      int tempo = engine->getTempo();
       writeIntNbr(tempo);
 
     } else if (line == 32) {

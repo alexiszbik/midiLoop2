@@ -11,6 +11,7 @@
 #pragma once
 
 #include "Track.h"
+#include "Tempo.h"
 #include "CopyPaste.h"
 
 #define TRACK_COUNT 4
@@ -26,9 +27,14 @@ public:
     }
 public:
     void tick() {
+        tempo.tick();
         for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].tick();
+            track[t].tick(getTempo());
         }
+    }
+
+    int getTempo() {
+        return tempo.getTempo();
     }
     
     void setIsPlaying(bool isPlaying) {
@@ -161,14 +167,16 @@ public:
 
     void loop() {
         for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].loop();
             track[t].processNotesOn();
         }
-        
     }
     
 private:
+    Tempo tempo;
     byte currentExclusiveTrack = 0;
     Track track[TRACK_COUNT];
     byte noteChannel = 1;
     CopyPaste clipboard;
+    
 };

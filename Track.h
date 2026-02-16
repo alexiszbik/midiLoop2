@@ -26,8 +26,8 @@ public:
         holdedNotes.initialize(midiOut, trackIndex, &settings);
     }
     
-    void tick() {
-        transport.tick();
+    void tick(int tempo) {
+        transport.tick(tempo);
     }
     
     void playNote(byte note, byte velocity) {
@@ -192,6 +192,10 @@ public:
     
     void setModulationWheel(byte value) {
         midiOut->sendModulationWheel(settings.channelOut, value);
+    }
+
+    void loop() {
+        transport.loop();
     }
 
 private:

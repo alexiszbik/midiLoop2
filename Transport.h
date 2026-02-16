@@ -26,10 +26,13 @@ public:
   }
 
 public:
-  void tick() {
+  void tick(int tempo) {
+    unsigned long now = millis();
 
-    tempo.tick();
-    
+    double quarterLen = 60./tempo;
+    double sxLen = quarterLen * 0.25;
+    double grooved = sxLen * (groove * 0.01);
+
     if (isPlaying) {
       if (currentTick % settings->getStepResolution() == 0) {
         if (toBeReseted) {
@@ -38,7 +41,12 @@ public:
         } else {
           currentStep = (currentTick / settings->getStepResolution());
         }
-        delegate->didChangeStep(currentStep);
+
+        bool isOddStep = currentStep % 2 == 1;
+        unsigned long offset = isOddStep ? grooved * 1000 : 0;
+        newStepTime = now + offset;
+        ready = true;
+        
       }
       currentTick++;
       currentTick = currentTick % getLength();
@@ -86,11 +94,12 @@ public:
     return groove;
   }
 
-  int getTempo() {
-    return tempo.getTempo();
-  }
-
   void loop() {
+    unsigned long now = millis();
+    if (now > newStepTime && ready) {
+        delegate->didChangeStep(currentStep);
+        ready = false;
+    }
   }
 
 private:
@@ -111,8 +120,9 @@ private:
   bool isPlaying = false;
   byte groove = 0;
 
-  Tempo tempo;
-
   TrackSettings* settings;
   TransportDelegate* delegate;
+
+  unsigned long newStepTime = 0;
+  bool ready = false;
 };
