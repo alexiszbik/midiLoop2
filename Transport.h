@@ -39,7 +39,6 @@ public:
   }
 
   void tick(int tempo) {
-    unsigned long now = millis();
 
     double quarterLen = 60. / tempo;
     double sxLen = quarterLen * 0.25;
@@ -106,7 +105,7 @@ public:
   }
 
   void loop() {
-    unsigned long now = millis();
+    now = millis();
     if (now > newStepTime && ready) {
       delegate->didChangeStep(currentStep);
       ready = false;
@@ -140,6 +139,7 @@ public:
   BarCount barCount = 8;
 
 private:
+  unsigned long now = 0;
   int currentTick = 0;
   byte currentStep = 0;
 

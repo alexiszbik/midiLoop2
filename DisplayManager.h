@@ -23,6 +23,7 @@ public:
     display.clearDisplay();
     display.drawPixel(10, 10, SSD1306_WHITE);
     this->engine = engine;
+    transport = engine->getTransport();
   }
 
   void setInvertedColor(bool inverted) {
@@ -46,10 +47,8 @@ public:
     if (cents) {
       display.write(BASE_FIG + cents);
     }
-    byte decimal = ((nbr % 100) / 10);
-    if (decimal) {
-      display.write(BASE_FIG + decimal);
-    }
+    byte decimal = (nbr % 100) / 10;
+    display.write(BASE_FIG + decimal);
     display.write(BASE_FIG + (nbr % 10));
   }
 
@@ -58,8 +57,6 @@ public:
   }
 
   void update() {
-
-    Transport* transport = engine->getTransport();
     TrackSettings* settings = engine->getSettings();
 
     byte stepsPerBar = transport->stepsPerBar;
@@ -133,6 +130,7 @@ private:
   Screen display = Screen();
   bool invertedColor = false;
   LooperEngine* engine;
+  Transport* transport;
 
   byte line = 0;
 };

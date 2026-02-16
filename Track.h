@@ -122,14 +122,6 @@ public:
         }
         transport->setIsPlaying(isPlaying);
     }
-
-    void resetTransport() {
-        transport->willReset();
-    }
-
-    void setGroove(byte groove) {
-        transport->setGroove(groove);
-    }
     
     void setIsSelected(bool isSelected) {
         if (settings.isSelected && !isSelected) {
@@ -169,10 +161,6 @@ public:
     
     void setModulationWheel(byte value) {
         midiOut->sendModulationWheel(settings.channelOut, value);
-    }
-
-    void loop() {
-        transport->loop();
     }
 
 private:

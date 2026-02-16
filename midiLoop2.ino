@@ -293,23 +293,24 @@ void loop() {
   if (counter > 60) {
     switch(currentUpdateStep) {
 
-      case kRecSwitch : updateRecSwitch(); break;
+      case kRecSwitch : updateRecSwitch();break;
 
-      case kOtherSwitches : updateOtherSwitches(); displayManager.update(); break;
+      case kOtherSwitches : updateOtherSwitches(); break;
 
       case kRecLed : updateRecLed(); break;
 
-      case kSelectedChannelSwitches : updateSelectedChannelSwitches(); displayManager.update(); break;
+      case kSelectedChannelSwitches : updateSelectedChannelSwitches();break;
 
       case kSelectedChannelLeds : updateSelectedChannelLeds(); break;
 
-      case kKnobs : handleKnobValues(); break;
+      case kKnobs : handleKnobValues();  break;
 
       default : break;
     }
 
+    displayManager.update();
+
     if (currentUpdateStep == kUpdateStepCount) {
-      displayManager.update();
       currentUpdateStep = 0;
     } else {
       currentUpdateStep++;

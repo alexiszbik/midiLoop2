@@ -42,9 +42,7 @@ public:
     }
 
     void setGroove(int groove) {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].setGroove(groove);
-        }
+        transport.setGroove(groove);
     }
     
     void setIsRecording(bool isRecording) {
@@ -56,9 +54,7 @@ public:
     }
 
     void resetTransport() {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].resetTransport();
-        }
+        transport.willReset();
     }
 
     void toggleTrackMode() {
@@ -140,25 +136,20 @@ public:
     }
 
     Transport* getTransport() {
-        //return track[currentExclusiveTrack].getTransport();
         return &transport;
     }
 
     TrackSettings* getSettings() {
         return track[currentExclusiveTrack].getSettings();
     }
-/*
-    Transport* getTrackTransport(byte trackIndex) {
-        //return track[trackIndex].getTransport();
-    }
-*/
+
     TrackSettings* getTrackSettings(byte trackIndex) {
         return track[trackIndex].getSettings();
     }
 
     void loop() {
+        transport.loop();
         for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].loop();
             track[t].processNotesOn();
         }
     }
