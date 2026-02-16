@@ -41,6 +41,18 @@ public:
     display.write(BASE_FIG + (nbr % 10));
   }
 
+  void writeIntNbr(int nbr) {
+    byte cents = nbr / 100;
+    if (cents) {
+      display.write(BASE_FIG + cents);
+    }
+    byte decimal = ((nbr % 100) / 10);
+    if (decimal) {
+      display.write(BASE_FIG + decimal);
+    }
+    display.write(BASE_FIG + (nbr % 10));
+  }
+
   void goToLine(byte line, byte x = 0) {
     display.setCursor(x, line * SCREEN_HEIGHT / 4);
   }
@@ -89,6 +101,10 @@ public:
         default:
           break;
       }
+    } else if (line == 24) {
+      goToLine(2);
+      int tempo = transport->getTempo();
+      writeIntNbr(tempo);
 
     } else if (line == 32) {
       goToLine(3);

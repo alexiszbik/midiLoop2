@@ -11,6 +11,7 @@
 #pragma once
 
 #include "TrackSettings.h"
+#include "Tempo.h"
 
 class TransportDelegate {
 public:
@@ -26,6 +27,9 @@ public:
 
 public:
   void tick() {
+
+    tempo.tick();
+    
     if (isPlaying) {
       if (currentTick % settings->getStepResolution() == 0) {
         if (toBeReseted) {
@@ -82,6 +86,10 @@ public:
     return groove;
   }
 
+  int getTempo() {
+    return tempo.getTempo();
+  }
+
   void loop() {
   }
 
@@ -103,6 +111,7 @@ private:
   bool isPlaying = false;
   byte groove = 0;
 
+  Tempo tempo;
 
   TrackSettings* settings;
   TransportDelegate* delegate;

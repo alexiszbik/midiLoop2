@@ -187,9 +187,6 @@ void handleStop() {
 }
 
 void handleClock() {
-  unsigned long newTime = millis();
-  unsigned long delta = newTime - lifeTime;
-  lifeTime = newTime;
 
   looper.tick();
   updatePlayLed();
