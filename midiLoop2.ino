@@ -170,7 +170,7 @@ void handleControlChange(byte channel, byte control, byte value) {
 
 void handlePitchBend(byte channel, int bend) {
   if (channel == MIDI_CHANNEL) {
-    //looper.controlChange(control, value);
+    //TODO : handle pitch bend
   }
 }
 
@@ -265,7 +265,6 @@ void updateOtherSwitches() {
     bool clearState = clearSwitch.getState();
     
     if (shiftState) {
-        digitalWrite(LED_BUILTIN, clearState ? HIGH : LOW);
       if (clearState) {
         looper.clearAll();
       }

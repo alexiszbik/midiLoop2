@@ -162,7 +162,6 @@ public:
     void loop() {
         for (byte t = 0; t < TRACK_COUNT; t++) {
             track[t].processNotesOn();
-            //Transport* transport = getTrackTransport(t);
         }
         
     }
