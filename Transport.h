@@ -21,32 +21,43 @@ public:
 
 class Transport {
 public:
-  Transport(TrackSettings* settings, TransportDelegate* delegate)
-    : settings(settings), delegate(delegate) {
+  Transport(TransportDelegate* delegate)
+    : delegate(delegate) {
   }
 
 public:
+  int getSeqLength() {
+    return getStepCount() * STEP_RESOLUTION;
+  }
+
+  int getStepCount() {
+    return stepsPerBar * barCount;
+  }
+
+  byte getStepResolution() {
+    return stepResolution;
+  }
+
   void tick(int tempo) {
     unsigned long now = millis();
 
-    double quarterLen = 60./tempo;
+    double quarterLen = 60. / tempo;
     double sxLen = quarterLen * 0.25;
     double grooved = sxLen * (groove * 0.01);
 
     if (isPlaying) {
-      if (currentTick % settings->getStepResolution() == 0) {
+      if (currentTick % getStepResolution() == 0) {
         if (toBeReseted) {
           reset();
           toBeReseted = false;
         } else {
-          currentStep = (currentTick / settings->getStepResolution());
+          currentStep = (currentTick / getStepResolution());
         }
 
         bool isOddStep = currentStep % 2 == 1;
         unsigned long offset = isOddStep ? grooved * 1000 : 0;
         newStepTime = now + offset;
         ready = true;
-        
       }
       currentTick++;
       currentTick = currentTick % getLength();
@@ -65,8 +76,8 @@ public:
   }
 
   int getRecStep(bool* playNote) {
-    int stepCount = settings->getStepCount();
-    double stepRatio = (double)currentTick / (double)settings->getStepResolution();
+    int stepCount = getStepCount();
+    double stepRatio = (double)currentTick / (double)getStepResolution();
     double flooredStepRatio = floor(stepRatio);
     double ratioFrac = stepRatio - flooredStepRatio;
     bool quantizeDown = ratioFrac < 0.5;
@@ -97,14 +108,26 @@ public:
   void loop() {
     unsigned long now = millis();
     if (now > newStepTime && ready) {
-        delegate->didChangeStep(currentStep);
-        ready = false;
+      delegate->didChangeStep(currentStep);
+      ready = false;
     }
+  }
+
+  bool getRecordingState() {
+    return isRecording;
+  }
+
+  bool setRecordingState(bool r) {
+    isRecording = r;
+  }
+
+  void toggleRecording() {
+    isRecording = !isRecording;
   }
 
 private:
   int getLength() {
-    return settings->getSeqLength();
+    return getSeqLength();
   }
 
   void reset() {
@@ -112,12 +135,14 @@ private:
     currentStep = 0;
   }
 
+public:
+  StepsPerBar stepsPerBar = 16;
+  BarCount barCount = 8;
+
 private:
   int currentTick = 0;
   byte currentStep = 0;
-  bool toBeReseted = false;
 
-  bool isPlaying = false;
   byte groove = 0;
 
   TrackSettings* settings;
@@ -125,4 +150,9 @@ private:
 
   unsigned long newStepTime = 0;
   bool ready = false;
+  bool toBeReseted = false;
+  bool isRecording = false;
+  bool isPlaying = false;
+
+  static constexpr byte stepResolution = 6;  // 24/4 -> 1 sixteenth
 };

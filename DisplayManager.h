@@ -62,7 +62,7 @@ public:
     Transport* transport = engine->getTransport();
     TrackSettings* settings = engine->getSettings();
 
-    byte stepsPerBar = settings->stepsPerBar;
+    byte stepsPerBar = transport->stepsPerBar;
 
     if (line == 0) {
       byte groove = transport->getGroove();
@@ -70,19 +70,20 @@ public:
       goToLine(0);
       setInvertedColor(true);
 
-      writeNbr(/*channnel ? */ engine->getCurrentExclusiveTrack() + 1);
+      writeNbr(engine->getCurrentExclusiveTrack() + 1);
 
       setInvertedColor(false);
       display.write(' ');
       display.write(CHAR_NOTE);
 
-      byte barCount = settings->barCount;
+      byte barCount = transport->barCount;
 
       writeNbr(barCount);
       display.write(':');
       writeNbr(stepsPerBar);
       display.write(' ');
       writeNbr(groove);
+
     } else if (line == 16) {
       goToLine(1);
       switch (settings->trackMode) {
@@ -101,6 +102,7 @@ public:
         default:
           break;
       }
+
     } else if (line == 24) {
       goToLine(2);
       int tempo = engine->getTempo();
@@ -110,7 +112,7 @@ public:
       goToLine(3);
       display.write(transport->getIsPlaying() ? CHAR_PLAY : CHAR_STOP);
       display.write(' ');
-      display.write(settings->isRecording ? CHAR_REC : ' ');
+      display.write(transport->getRecordingState() ? CHAR_REC : ' ');
       display.write(settings->isMuted ? CHAR_MUTE : ' ');
 
       byte step = transport->getCurrentStep();

@@ -16,11 +16,11 @@
 
 #define TRACK_COUNT 4
 
-class LooperEngine {
+class LooperEngine : public TransportDelegate {
 public:
     LooperEngine(MidiOut* midiOut) {
         for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].initialize(t, midiOut);
+            track[t].initialize(t, midiOut, &transport);
             track[t].setChannelOut(t + 1 + 4); //temp
         }
         track[0].setIsSelected(true);
@@ -28,9 +28,7 @@ public:
 public:
     void tick() {
         tempo.tick();
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].tick(getTempo());
-        }
+        transport.tick(getTempo());
     }
 
     int getTempo() {
@@ -50,15 +48,11 @@ public:
     }
     
     void setIsRecording(bool isRecording) {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].setIsRecording(isRecording);
-        }
+        transport.setRecordingState(isRecording);
     }
 
     void toggleIsRecording() {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].toggleIsRecording();
-        }
+        transport.toggleRecording();
     }
 
     void resetTransport() {
@@ -116,15 +110,11 @@ public:
     }
 
     void setGlobalBarCount(byte newBarCount) {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].setBarCount(newBarCount);
-        }
+        transport.barCount = newBarCount;
     }
     
     void setGlobalStepCount(byte newStepCount) {
-        for (byte t = 0; t < TRACK_COUNT; t++) {
-            track[t].setStepCount(newStepCount);
-        }
+        transport.stepsPerBar = newStepCount;
     }
     
     void clearAll() {
@@ -150,17 +140,18 @@ public:
     }
 
     Transport* getTransport() {
-        return track[currentExclusiveTrack].getTransport();
+        //return track[currentExclusiveTrack].getTransport();
+        return &transport;
     }
 
     TrackSettings* getSettings() {
         return track[currentExclusiveTrack].getSettings();
     }
-
+/*
     Transport* getTrackTransport(byte trackIndex) {
-        return track[trackIndex].getTransport();
+        //return track[trackIndex].getTransport();
     }
-
+*/
     TrackSettings* getTrackSettings(byte trackIndex) {
         return track[trackIndex].getSettings();
     }
@@ -171,6 +162,12 @@ public:
             track[t].processNotesOn();
         }
     }
+
+    virtual void didChangeStep (int newStep) override {
+        for (byte t = 0; t < TRACK_COUNT; t++) {
+            track[t].didChangeStep(newStep);
+        }
+    }
     
 private:
     Tempo tempo;
@@ -178,5 +175,6 @@ private:
     Track track[TRACK_COUNT];
     byte noteChannel = 1;
     CopyPaste clipboard;
+    Transport transport = Transport(this);
     
 };

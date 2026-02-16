@@ -16,23 +16,20 @@
 #include "Arpeggiator.h"
 #include "NotePool.h"
 
-class Track : public TransportDelegate {
+class Track {
 public:
-    void initialize(byte trackIndex, MidiOut* midiOut) {
+    void initialize(byte trackIndex, MidiOut* midiOut, Transport* trans) {
         this->midiOut = midiOut;
         this->trackIndex = trackIndex;
+        this->transport = trans;
 
         playedNotes.initialize(midiOut, trackIndex, &settings);
         holdedNotes.initialize(midiOut, trackIndex, &settings);
     }
     
-    void tick(int tempo) {
-        transport.tick(tempo);
-    }
-    
     void playNote(byte note, byte velocity) {
         if (settings.isSelected) {
-            bool isPlaying = transport.getIsPlaying();
+            bool isPlaying = transport->getIsPlaying();
             if (settings.useArp() && isPlaying) {
                 if (velocity) {
                     arp.addNote(note);
@@ -40,10 +37,10 @@ public:
                     arp.removeNote(note);
                 }
             } else {
-                if (settings.isRecording && isPlaying && !eraserState) {
+                if (transport->getRecordingState() && isPlaying && !eraserState) {
                     bool playNote = false;
                     if (velocity) {
-                        int step = transport.getRecStep(&playNote); 
+                        int step = transport->getRecStep(&playNote); 
                         if (settings.modeIsPoly()) {
                             sequence[step].add(note, settings.modeIsHold());
                         } else {
@@ -62,7 +59,7 @@ public:
         }
     }
     
-    virtual void didChangeStep (int newStep) override {
+    void didChangeStep (int newStep) {
         playedNotes.sendNotesOff();
 
         auto& step = sequence[newStep];
@@ -75,7 +72,7 @@ public:
         if (settings.useArp() && !eraserState) {
             byte arpNote = arp.getNote();
             if (arpNote) {
-              if (settings.isRecording) {
+              if (transport->getRecordingState()) {
                 step.set(arpNote);
               } else {
                 if (!settings.isMuted) {
@@ -123,23 +120,15 @@ public:
             holdedNotes.sendNotesOff();
             playedNotes.sendNotesOff();
         }
-        transport.setIsPlaying(isPlaying);
-    }
-    
-    void setIsRecording(bool isRecording) {
-        settings.isRecording = isRecording;
-    }
-
-    void toggleIsRecording() {
-        settings.isRecording = !settings.isRecording;
+        transport->setIsPlaying(isPlaying);
     }
 
     void resetTransport() {
-        transport.willReset();
+        transport->willReset();
     }
 
     void setGroove(byte groove) {
-        transport.setGroove(groove);
+        transport->setGroove(groove);
     }
     
     void setIsSelected(bool isSelected) {
@@ -157,14 +146,6 @@ public:
         settings.channelOut = channelOut;
     }
     
-    void setBarCount(byte newBarCount) {
-        settings.barCount = newBarCount;
-    }
-    
-    void setStepCount(byte newStepCount) {
-        settings.stepsPerBar = newStepCount;
-    }
-    
     void setTrackMode(TrackMode trackMode) {
         arp.eraseAll();
         settings.trackMode = trackMode;
@@ -172,10 +153,6 @@ public:
 
     inline void setEraserState(bool state) {
         eraserState = state;
-    }
-
-    Transport* getTransport() {
-        return &transport;
     }
 
     TrackSettings* getSettings() {
@@ -187,7 +164,7 @@ public:
     }
 
     void fill() {
-        sequence.fill(settings.getStepCount());
+        sequence.fill(transport->getStepCount());
     }
     
     void setModulationWheel(byte value) {
@@ -195,7 +172,7 @@ public:
     }
 
     void loop() {
-        transport.loop();
+        transport->loop();
     }
 
 private:
@@ -206,7 +183,7 @@ private:
 
     MidiOut* midiOut;
 
-    Transport transport = Transport(&settings, this);
+    Transport* transport = nullptr;
     Sequence sequence;
     Arpeggiator arp;
     bool eraserState = false;

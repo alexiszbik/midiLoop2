@@ -30,7 +30,6 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 #include "LooperEngine.h"
 #include "DisplayManager.h"
 
-unsigned long lifeTime = 0;
 MidiOut midiOut;
 LooperEngine looper = LooperEngine(&midiOut);
 DisplayManager displayManager;
@@ -206,8 +205,8 @@ void updatePlayLed() {
 }
 
 void updateRecLed() {
-  TrackSettings* settings = looper.getSettings();
-  digitalWrite(LED_REC, settings->isRecording ? HIGH : LOW);
+  Transport* transport = looper.getTransport();
+  digitalWrite(LED_REC, transport->getRecordingState() ? HIGH : LOW);
 }
 
 void updateRecSwitch() {
@@ -287,11 +286,6 @@ void updateSelectedChannelLeds() {
 }
 
 void loop() {
-
-  if (lifeTime == 0) {
-    lifeTime = millis();
-    return;
-  }
 
   MIDI.read();
   looper.loop();

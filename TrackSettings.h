@@ -25,18 +25,6 @@ enum TrackMode : byte {
 
 class TrackSettings {
 public:
-    int getSeqLength() {
-        return getStepCount() * STEP_RESOLUTION;
-    }
-    
-    int getStepCount() {
-        return stepsPerBar * barCount;
-    }
-    
-    byte getStepResolution() {
-        return stepResolution;
-    }
-
     bool useArp() {
       return trackMode == kArp;
     }
@@ -54,14 +42,8 @@ public:
     }
 
 public:
-    StepsPerBar stepsPerBar = 16;
-    BarCount barCount = 8;
     byte channelOut = 1;
     bool isSelected = false;
-    bool isRecording = false;
     bool isMuted = false;
     TrackMode trackMode = kSequence;
-    
-private:
-    byte stepResolution = 6; // 24/4 -> 1 sixteenth
 };
