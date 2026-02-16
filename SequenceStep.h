@@ -8,11 +8,11 @@ public:
 
 public:
   SequenceStep() {
+    clear();
   }
 
   SequenceStep(const SequenceStep& other) {
     state.state = other.state.state;
-    hold = other.hold;
     for (int i = 0; i < MaxPolyphony; i++) {
       data[i] = other.data[i];
     }
@@ -25,14 +25,13 @@ public:
       data[i] = 0;
     }
     state.clear();
-    hold = false;
   }
 
   void set(byte note) {
     data[0] = note;
     state.setCount(1);
     state.setPos(1);
-    hold = false;
+    state.setHold(false);
   }
 
   void add(byte note, bool hold = false) {
@@ -52,7 +51,7 @@ public:
 
     state.setCount(count);
     state.setPos(pos);
-    this->hold = hold;
+    state.setHold(hold);
   }
 
   byte getCount() {
@@ -64,11 +63,10 @@ public:
   }
 
   bool isHold() {
-    return hold;
+    return state.getHold();
   }
 
 private:
   StepState state;
-  bool hold = false;
   byte data[MaxPolyphony];
 };
