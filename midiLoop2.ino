@@ -1,4 +1,5 @@
 #include "MIDI.h"
+#include <uClock.h>
 #include "Mux.h"
 
 #include "Switch.h"
@@ -39,25 +40,30 @@ Switch shiftSwitch = Switch(MUX_BUTTON_SHIFT, true);
 Switch clearSwitch = Switch(MUX_BUTTON_CLEAR, true);
 Switch playSwitch = Switch(MUX_BUTTON_PLAY, true);
 
-Switch channelSwitches[TRACK_COUNT] = {Switch(0), Switch(1), Switch(2), Switch(3)};
+Switch channelSwitches[TRACK_COUNT] = { Switch(0), Switch(1), Switch(2), Switch(3) };
 
 Knob knobA(
   KNOB_A,
-  KnobState(Range(), [](byte v) {  }),
-  KnobState(Range(1, 8), [](byte v) { looper.setGlobalBarCount(v); })
-);
+  KnobState(Range(45, 240), [](byte v) {
+    uClock.setTempo(v);
+  }),
+  KnobState(Range(1, 8), [](byte v) {
+    looper.setGlobalBarCount(v);
+  }));
 
 Knob knobB(
   KNOB_B,
-  KnobState(Range(), [](byte v) {  }),
-  KnobState(Range(), [](byte v) { looper.setGlobalStepCount(v); })
-);
+  KnobState(Range(0, 50), [](byte v) {
+    looper.setGroove(v);
+  }),
+  KnobState(Range(), [](byte v) {
+    looper.setGlobalStepCount(v);
+  }));
 
 Knob knobC(
   KNOB_C,
-  KnobState(Range(), [](byte v) {  }),
-  KnobState(Range(0, 50), [](byte v) { looper.setGroove(v); })
-);
+  KnobState(Range(), [](byte v) {}),
+  KnobState(Range(), [](byte v) {}));
 
 enum UpdateStep : byte {
   kRecSwitch = 0,
@@ -73,122 +79,151 @@ enum UpdateStep : byte {
 byte currentUpdateStep = 0;
 byte counter = 0;
 bool shiftState = false;
+bool isMidiSynced = false;
+bool isUClockPlaying = false;
 
 void setup() {
   delay(200);
   Serial.begin(9600);
-  Serial1.begin(31250); //MIDI baud rate
+  Serial1.begin(31250);  //MIDI baud rate
+
+  uClock.setOutputPPQN(uClock.PPQN_24);
+  uClock.setOnOutputPPQN(onUClockPPN);
 
   for (byte i = 0; i < TRACK_COUNT; i++) {
-    pinMode(LED_TRACK_SELECT+i, OUTPUT); 
-    pinMode(LED_TRACK_PLAY+i, OUTPUT); 
+    pinMode(LED_TRACK_SELECT + i, OUTPUT);
+    pinMode(LED_TRACK_PLAY + i, OUTPUT);
   }
 
   pinMode(LED_REC, OUTPUT);
   pinMode(LED_PLAY, OUTPUT);
 
-  MIDI.setHandleNoteOn(handleNoteOn);
-  MIDI.setHandleNoteOff(handleNoteOff);
-  MIDI.setHandleControlChange(handleControlChange);
-  MIDI.setHandlePitchBend(handlePitchBend);
-  MIDI.setHandleStart(handleStart);
-  MIDI.setHandleStop(handleStop);
-  MIDI.setHandleClock(handleClock);
+  MIDI.setHandleNoteOn(midiHandleNoteOn);
+  MIDI.setHandleNoteOff(midiHandleNoteOff);
+  MIDI.setHandleControlChange(midiHandleControlChange);
+  MIDI.setHandlePitchBend(midiHandlePitchBend);
+  MIDI.setHandleStart(midiHandleStart);
+  MIDI.setHandleStop(midiHandleStop);
+  MIDI.setHandleClock(midiHandleClock);
 
   MIDI.turnThruOn();
 
-  MIDI.begin(MIDI_CHANNEL_OMNI); //check if there's no performance issues
+  MIDI.begin(MIDI_CHANNEL_OMNI);  //check if there's no performance issues
 
   displayManager.init(&looper);
+
+  uClock.init();
+  uClock.setTempo(120);
 }
 
-void handleNoteOn(byte channel, byte note, byte velocity) {
-    if (channel == MIDI_CHANNEL) {
-        looper.playNoteOn(note, velocity);
-    }
-    if (channel == LOOPER_CHANNEL) {
-        
-        if (note >= SELECT_CHANNEL_NOTE && note < (SELECT_CHANNEL_NOTE + 4)) {
-            byte channel = note - SELECT_CHANNEL_NOTE;
-            looper.selectExclusiveTrack(channel);
-        }
-        else if (note >= MUTE_CHANNEL_NOTE && note < (MUTE_CHANNEL_NOTE + 4)) {
-            byte channel = note - MUTE_CHANNEL_NOTE;
-            looper.getTrackSettings(channel)->isMuted = (velocity > 0);
-        
-        }  else if (note == ERASE_ALL_NOTE) {
-            if (velocity > 0) {
-                looper.clearAllTracks();
-            }
-        }
-    }
+void looperTick() {
+  looper.tick();
+  updatePlayLed();
 }
 
-void handleNoteOff(byte channel, byte note, byte velocity) {
-    if (channel == MIDI_CHANNEL) {
-        looper.playNoteOn(note, 0);
-    }
-    if (channel == LOOPER_CHANNEL) {
-        if (note >= MUTE_CHANNEL_NOTE && note < (MUTE_CHANNEL_NOTE + 4)) {
-            byte channel = note - MUTE_CHANNEL_NOTE;
-            looper.getTrackSettings(channel)->isMuted = false;
-        } 
-    }
+void onUClockPPN(uint32_t tick) {
+  looperTick();
 }
 
-void handleControlChange(byte channel, byte control, byte value) {
-    if (channel == MIDI_CHANNEL) {
-        if (control == 1) { // modulation wheel ?
-            //MIDI.sendControlChange(control, value, 5);
-            looper.setModulationWheel(value);
-        }
-        //looper.controlChange(control, value);
-    }
-    if (channel == LOOPER_CHANNEL) {
-        if (control == BAR_COUNT_CC) {
-            looper.setGlobalBarCount(value);
-        } else if (control == ARP_ONOFF_CC) {
-            bool useArp = (value >= 64);
-            looper.setTrackMode(useArp ? kArp : kSequence);
-            //arpState.panic(); //Maybe it is safer
-        } else if (control == SEQ_FILL_CC) {
-            looper.fill();
-        } else if (control == REC_ONOFF_CC) {
-            bool rec = (value >= 64);
-            looper.setIsRecording(rec);
-        } else if (control >= MUTE_CHANNEL_CC && control < (MUTE_CHANNEL_CC + 4)) {
-            byte channel = control - MUTE_CHANNEL_CC;
-            looper.getTrackSettings(channel)->isMuted = (value > 64);
-        } else if (control == COPY_CC) {
-            looper.copy(value);
-        } else if (control == PASTE_CC) {
-            looper.paste(value);
-        }
-    }
+void midiHandleClock() {
+  if (isMidiSynced) {
+    looperTick();
+  }
 }
 
-void handlePitchBend(byte channel, int bend) {
+
+void midiHandleNoteOn(byte channel, byte note, byte velocity) {
+  if (channel == MIDI_CHANNEL) {
+    looper.playNoteOn(note, velocity);
+  }
+  if (channel == LOOPER_CHANNEL) {
+
+    if (note >= SELECT_CHANNEL_NOTE && note < (SELECT_CHANNEL_NOTE + 4)) {
+      byte channel = note - SELECT_CHANNEL_NOTE;
+      looper.selectExclusiveTrack(channel);
+    } else if (note >= MUTE_CHANNEL_NOTE && note < (MUTE_CHANNEL_NOTE + 4)) {
+      byte channel = note - MUTE_CHANNEL_NOTE;
+      looper.getTrackSettings(channel)->isMuted = (velocity > 0);
+
+    } else if (note == ERASE_ALL_NOTE) {
+      if (velocity > 0) {
+        looper.clearAllTracks();
+      }
+    }
+  }
+}
+
+void midiHandleNoteOff(byte channel, byte note, byte velocity) {
+  if (channel == MIDI_CHANNEL) {
+    looper.playNoteOn(note, 0);
+  }
+  if (channel == LOOPER_CHANNEL) {
+    if (note >= MUTE_CHANNEL_NOTE && note < (MUTE_CHANNEL_NOTE + 4)) {
+      byte channel = note - MUTE_CHANNEL_NOTE;
+      looper.getTrackSettings(channel)->isMuted = false;
+    }
+  }
+}
+
+void midiHandleControlChange(byte channel, byte control, byte value) {
+  if (channel == MIDI_CHANNEL) {
+    if (control == 1) {  // modulation wheel ?
+      //MIDI.sendControlChange(control, value, 5);
+      looper.setModulationWheel(value);
+    }
+    //looper.controlChange(control, value);
+  }
+  if (channel == LOOPER_CHANNEL) {
+    if (control == BAR_COUNT_CC) {
+      looper.setGlobalBarCount(value);
+    } else if (control == ARP_ONOFF_CC) {
+      bool useArp = (value >= 64);
+      looper.setTrackMode(useArp ? kArp : kSequence);
+      //arpState.panic(); //Maybe it is safer
+    } else if (control == SEQ_FILL_CC) {
+      looper.fill();
+    } else if (control == REC_ONOFF_CC) {
+      bool rec = (value >= 64);
+      looper.setIsRecording(rec);
+    } else if (control >= MUTE_CHANNEL_CC && control < (MUTE_CHANNEL_CC + 4)) {
+      byte channel = control - MUTE_CHANNEL_CC;
+      looper.getTrackSettings(channel)->isMuted = (value > 64);
+    } else if (control == COPY_CC) {
+      looper.copy(value);
+    } else if (control == PASTE_CC) {
+      looper.paste(value);
+    }
+  }
+}
+
+void midiHandlePitchBend(byte channel, int bend) {
   if (channel == MIDI_CHANNEL) {
     //TODO : handle pitch bend
   }
 }
 
-void handleStart() {
+void start() {
   looper.setIsPlaying(true);
 }
 
-void handleStop() {
+void stop() {
   looper.setIsPlaying(false);
   updatePlayLed();
   for (byte i = 0; i < 4; i++) {
-    digitalWrite(LED_TRACK_PLAY+i, LOW);
+    digitalWrite(LED_TRACK_PLAY + i, LOW);
   }
 }
 
-void handleClock() {
+void midiHandleStart() {
+  if (isUClockPlaying) return;
+  isMidiSynced = true;
+  start();
+}
 
-  looper.tick();
-  updatePlayLed();
+void midiHandleStop() {
+  if (isUClockPlaying) return;
+  stop();
+  isMidiSynced = false;
 }
 
 void handleKnobValues() {
@@ -224,26 +259,25 @@ void updateSelectedChannelSwitches() {
     if (channelSwitches[i].debounce()) {
       if (channelSwitches[i].getState() == true) {
         if (shiftState) {
-          switch(i) {
-            case 0 :
+          switch (i) {
+            case 0:
               looper.toggleTrackMode();
               break;
-            case 1 :
+            case 1:
               looper.toggleMute();
               break;
-            case 2 :
+            case 2:
               looper.copyPaste();
               break;
-            case 3 :
+            case 3:
               looper.fill();
               break;
-            default :
+            default:
               break;
           }
         } else {
           selectedChannel = i;
         }
-        
       }
     }
   }
@@ -259,20 +293,33 @@ void updateOtherSwitches() {
   }
   if (clearSwitch.debounce()) {
     bool clearState = clearSwitch.getState();
-    
+
     if (shiftState) {
       if (clearState) {
         looper.clearAll();
       }
     } else {
       looper.setEraserState(clearState);
-    } 
+    }
   }
   if (playSwitch.debounce()) {
     bool playState = playSwitch.getState();
     if (shiftState) {
       if (playState) {
         looper.resetTransport();
+      }
+    } else {
+      if (playState) {
+        Transport* transport = looper.getTransport();
+        if (transport->getIsPlaying()) {
+          uClock.stop();
+          stop();
+          isUClockPlaying = false;
+        } else if (!isMidiSynced) {
+          start();
+          uClock.start();
+          isUClockPlaying = true;
+        }
       }
     }
   }
@@ -281,31 +328,33 @@ void updateOtherSwitches() {
 void updateSelectedChannelLeds() {
   byte currentTrack = looper.getCurrentExclusiveTrack();
   for (byte i = 0; i < TRACK_COUNT; i++) {
-    digitalWrite(LED_TRACK_SELECT+i, currentTrack == i);
+    digitalWrite(LED_TRACK_SELECT + i, currentTrack == i);
   }
 }
 
 void loop() {
 
+  uClock.run();
+
   MIDI.read();
   looper.loop();
-  
+
   if (counter > 60) {
-    switch(currentUpdateStep) {
+    switch (currentUpdateStep) {
 
-      case kRecSwitch : updateRecSwitch();break;
+      case kRecSwitch: updateRecSwitch(); break;
 
-      case kOtherSwitches : updateOtherSwitches(); break;
+      case kOtherSwitches: updateOtherSwitches(); break;
 
-      case kRecLed : updateRecLed(); break;
+      case kRecLed: updateRecLed(); break;
 
-      case kSelectedChannelSwitches : updateSelectedChannelSwitches();break;
+      case kSelectedChannelSwitches: updateSelectedChannelSwitches(); break;
 
-      case kSelectedChannelLeds : updateSelectedChannelLeds(); break;
+      case kSelectedChannelLeds: updateSelectedChannelLeds(); break;
 
-      case kKnobs : handleKnobValues();  break;
+      case kKnobs: handleKnobValues(); break;
 
-      default : break;
+      default: break;
     }
 
     displayManager.update();

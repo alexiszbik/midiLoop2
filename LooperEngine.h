@@ -39,6 +39,7 @@ public:
         for (byte t = 0; t < TRACK_COUNT; t++) {
             track[t].setIsPlaying(isPlaying);
         }
+        transport.setIsPlaying(isPlaying);
     }
 
     void setGroove(int groove) {

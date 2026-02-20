@@ -120,7 +120,6 @@ public:
             holdedNotes.sendNotesOff();
             playedNotes.sendNotesOff();
         }
-        transport->setIsPlaying(isPlaying);
     }
     
     void setIsSelected(bool isSelected) {
