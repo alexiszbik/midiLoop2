@@ -123,6 +123,9 @@ void looperTick() {
 
 void onUClockPPN(uint32_t tick) {
   looperTick();
+  if (!isMidiSynced) {
+    Serial1.write(0xF8);
+  }
 }
 
 void midiHandleClock() {
@@ -130,7 +133,6 @@ void midiHandleClock() {
     looperTick();
   }
 }
-
 
 void midiHandleNoteOn(byte channel, byte note, byte velocity) {
   if (channel == MIDI_CHANNEL) {
@@ -203,6 +205,9 @@ void midiHandlePitchBend(byte channel, int bend) {
 }
 
 void start() {
+  if (!isMidiSynced) {
+     Serial1.write(0xFA);
+  }
   looper.setIsPlaying(true);
 }
 
@@ -211,6 +216,9 @@ void stop() {
   updatePlayLed();
   for (byte i = 0; i < 4; i++) {
     digitalWrite(LED_TRACK_PLAY + i, LOW);
+  }
+  if (!isMidiSynced) {
+    Serial1.write(0xFC);
   }
 }
 
