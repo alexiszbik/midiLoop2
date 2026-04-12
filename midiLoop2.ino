@@ -206,7 +206,7 @@ void midiHandlePitchBend(byte channel, int bend) {
 
 void start() {
   if (!isMidiSynced) {
-     Serial1.write(0xFA);
+    Serial1.write(0xFA);
   }
   looper.setIsPlaying(true);
 }
@@ -235,9 +235,14 @@ void midiHandleStop() {
 }
 
 void handleKnobValues() {
-  knobA.check(shiftState);
-  knobB.check(shiftState);
-  knobC.check(shiftState);
+  static byte knobIndex = 0;
+  switch (knobIndex) {
+    case 0: knobA.check(shiftState); break;
+    case 1: knobB.check(shiftState); break;
+    case 2: knobC.check(shiftState); break;
+  }
+  knobIndex++;
+  if (knobIndex >= 3) knobIndex = 0;
 }
 
 void updatePlayLed() {

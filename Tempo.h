@@ -9,6 +9,7 @@ public:
     for (byte i = 0; i < nbBpm; i++) {
       bpmList[i] = DEFAULT_TEMPO;
     }
+    sum = nbBpm * DEFAULT_TEMPO;
   }
 
   void tick() {
@@ -17,15 +18,17 @@ public:
     lifeTime = newTime;
 
     if (delta > 0) {
-      float bpmNow = 60000.0 / (24.0 * delta);
-      bpmList[bpmListIndex] = bpmNow;
-      bpmListIndex = (bpmListIndex + 1) % nbBpm;
+      int bpmNow = 60000 / (24 * delta);
 
-      float sum = 0;
-      for (byte i = 0; i < nbBpm; i++) {
-        sum += bpmList[i];
-      }
-      float bpm = sum / nbBpm;
+      sum -= bpmList[bpmListIndex];  // enlève ancienne valeur
+      sum += bpmNow;                 // ajoute nouvelle
+
+      bpmList[bpmListIndex] = bpmNow;
+
+      bpmListIndex++;
+      if (bpmListIndex >= nbBpm) bpmListIndex = 0;
+      
+      int bpm = sum / nbBpm;
       tempo = (int)bpm;
     }
   }
@@ -38,7 +41,8 @@ private:
   unsigned long lifeTime = 0;
 
   static constexpr int nbBpm = 24;
-  float bpmList[nbBpm];
+  int bpmList[nbBpm];
   byte bpmListIndex = 0;
   int tempo = DEFAULT_TEMPO;
+  long sum;
 };
